@@ -1,0 +1,48 @@
+[
+  {
+    "id": "leetcode-patterns-dp-distributed",
+    "slug": "pattern-recognition-leetcode-dp-distributed-systems",
+    "title": "Pattern Recognition in LeetCode: From Dynamic Programming to Distributed Systems",
+    "excerpt": "A deep dive into decomposing algorithmic problems using recurring templates—and why subproblem memoization is the exact same mental model behind distributed caching and idempotent request routing.",
+    "category": "Algorithms",
+    "tags": [
+      "LeetCode",
+      "Dynamic Programming",
+      "System Design",
+      "Caching",
+      "C++"
+    ],
+    "readTime": "8 min read",
+    "publishedAt": "Sep 04, 2026",
+    "isDraft": false,
+    "author": {
+      "name": "Harmanpreet Singh",
+      "signature": "Harmanpreet Singh",
+      "role": "Backend & Distributed Systems Engineer"
+    },
+    "content": "## The Core Shift: Stop Solving Problems, Start Classifying State Transitions\n\nWhen solving algorithmic challenges—whether preparing for technical interviews or architecting high-throughput distributed microservices—the biggest leap in engineering intuition occurs when you stop treating every problem as a unique riddle.\n\nInstead, **90% of complex algorithmic challenges map directly to fewer than 7 fundamental templates**.\n\n```\n[ Problem Space ]\n        │\n        ├── Sequential Decision? ──────► Dynamic Programming (State DAG)\n        ├── Window / Subarray Range? ──► Sliding Window / Two Pointers\n        ├── Shortest Path / Level? ────► BFS / Dijkstra / Topological Sort\n        ├── Connectivity / Cycles? ────► Union-Find (Disjoint Set Union)\n        └── Partition / Monotonic? ────► Monotonic Stack / Binary Search\n```\n\n---\n\n## 1. Dynamic Programming as State Space Graphs\n\nConsider the classic **0/1 Knapsack** vs **Unbounded Knapsack** vs **Interval Scheduling**. Many developers memorize tables. But in reality, every DP problem is simply finding the shortest/longest path in a **Directed Acyclic Graph (DAG)** of states:\n\n### The Universal DP Recurrence Form:\n```text\nState: DP[i][w] = Maximum value achievable considering items up to index i with capacity w\nBase Case: DP[0][w] = 0 for all w\nTransition: DP[i][w] = max(DP[i-1][w], DP[i-1][w - weight[i]] + value[i])\n```\n\nHere is how you express this cleanly in modern C++20 with cache locality optimizations:\n\n```cpp\n#include <vector>\n#include <algorithm>\n#include <iostream>\n\n// Space-optimized 1D Rolling Array Pattern\nint solveKnapsack(int capacity, const std::vector<int>& weights, const std::vector<int>& values) {\n    std::vector<int> dp(capacity + 1, 0);\n\n    for (size_t i = 0; i < weights.size(); ++i) {\n        // Traverse backwards to prevent using the same item multiple times in 0/1\n        for (int w = capacity; w >= weights[i]; --w) {\n            dp[w] = std::max(dp[w], dp[w - weights[i]] + values[i]);\n        }\n    }\n    return dp[capacity];\n}\n```\n\n---\n\n## 2. Why This Matters in Distributed Systems\n\nThink about how a **Distributed Cache (e.g. Redis Cluster)** or an **API Gateway with Idempotency Keys** works:\n\n> [!NOTE]\n> **Memoization in Code** $\\equiv$ **Distributed Caching in Production**\n> - In DP: We cache intermediate subproblem results to avoid redundant $O(2^N)$ subtree recomputations.\n> - In Distributed Systems: We cache query results (with TTL & LRU eviction) to protect underlying databases from $O(QPS)$ cascading thundering herds.\n\n### The Parallel Architecture:\n1. **Overlapping Subproblems**: In an e-commerce checkout service, multiple concurrent requests calculate the same shipping rate matrix $\\rightarrow$ solved via Redis memoization.\n2. **Optimal Substructure**: The optimal global latency of a federated RPC pipeline is composed of the optimal latencies of its DAG dependencies $\\rightarrow$ solved via async pipeline fan-out.\n\n---\n\n## 3. The 5-Step Pattern Recognition Framework\n\nWhenever you encounter a new problem:\n\n1. **Identify the Constraints**: Look at $N$. If $N \\le 20$, think Bitmask/Backtracking. If $N \\le 10^5$, think $O(N \\log N)$ Sorting/Binary Search. If $N \\le 10^7$, think $O(N)$ Hash Map/Sliding Window.\n2. **Define State Variables**: What is the minimum set of parameters needed to uniquely represent a snapshot of progress?\n3. **Formulate the Boundary**: What happens at index 0, negative capacities, or empty trees?\n4. **Determine the Direction of Computation**: Bottom-up (iterative with rolling variables) vs Top-Down (memoized recursion).\n5. **Optimize Space Complexity**: Can a $2\\text{D}$ table $O(N \\times M)$ be compressed to $O(M)$ using two rolling rows or a single backward array?\n\nMastering this mental model turns algorithmic problem solving from stressful memorization into systematic engineering decomposition."
+  },
+  {
+    "id": "async-tcp-game-backends-asio",
+    "slug": "building-low-latency-multiplayer-backends-cpp-asio",
+    "title": "Building Low-Latency Multiplayer Backends with Modern C++20 and Asio",
+    "excerpt": "Architectural insights into building asynchronous event-driven game servers, custom binary packet framing, and zero-allocation socket rings for sub-10ms tick rates.",
+    "category": "Distributed Systems",
+    "tags": [
+      "C++20",
+      "Asio",
+      "TCP/IP",
+      "Networking",
+      "System Design"
+    ],
+    "readTime": "6 min read",
+    "publishedAt": "Aug 28, 2026",
+    "isDraft": false,
+    "author": {
+      "name": "Harmanpreet Singh",
+      "signature": "Harmanpreet Singh",
+      "role": "Backend & Distributed Systems Engineer"
+    },
+    "content": "## Architecture of a High-Performance Game Server\n\nWhen handling thousands of concurrent real-time player connections with rigid tick rate guarantees (e.g., 60 Hz = 16.6ms per frame), blocking I/O and thread-per-client models fall apart under context switching overhead.\n\n### The Single-Threaded Event Loop + Worker Pool Pattern\n\nUsing **Boost.Asio / standalone Asio** with modern C++20 coroutines (`co_await`) lets us write linear, synchronous-looking networking code while executing completely asynchronously over `epoll` (Linux) or `kqueue` (macOS).\n\n```cpp\n#include <asio.hpp>\n#include <memory>\n#include <iostream>\n\nclass Session : public std::enable_shared_from_this<Session> {\npublic:\n    explicit Session(asio::ip::tcp::socket socket) : socket_(std::move(socket)) {}\n\n    void start() {\n        readHeader();\n    }\n\nprivate:\n    void readHeader() {\n        auto self(shared_from_this());\n        asio::async_read(socket_, asio::buffer(headerBuffer_),\n            [this, self](std::error_code ec, std::size_t length) {\n                if (!ec) {\n                    processPacket();\n                }\n            });\n    }\n\n    void processPacket() {\n        // Zero-copy deserialization and tick enqueue\n    }\n\n    asio::ip::tcp::socket socket_;\n    std::array<uint8_t, 8> headerBuffer_{};\n};\n```\n\n---\n\n## Packet Framing & Memory Arena Pools\n\nIn TCP streams, messages are byte streams without message boundaries. We implement a lightweight 4-byte header:\n- `uint16_t packet_id`\n- `uint16_t payload_size`\n\nBy pre-allocating memory arenas for active sessions, we eliminate heap allocations during real-time match gameplay, ensuring sub-5ms packet turnaround."
+  }
+]
