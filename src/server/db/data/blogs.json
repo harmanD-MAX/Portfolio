@@ -1,5 +1,28 @@
 [
   {
+    "title": "hh",
+    "slug": "hh",
+    "excerpt": " Introduction\n\nWrite your technical thoughts, code walkthroughs, or system design insights here.\n\n 1. Key Concept & Theory\n\nExplain the core idea with exam...",
+    "content": "## Introduction\n\nWrite your technical thoughts, code walkthroughs, or system design insights here.\n\n### 1. Key Concept & Theory\n\nExplain the core idea with examples and clear constraints.\n\n```cpp\n// Sample Code Snippet\n#include <iostream>\n\nvoid solve() {\n    std::cout << \"Hello from Harman's Engineering Journal!\" << std::endl;\n}\n```\n\n> [!NOTE]\n> Add architectural notes, trade-offs, and latency considerations here.\n\n### 2. Summary & Takeaways\n- Point 1: Systematic pattern recognition\n- Point 2: Cache locality & state space compression\n\n<!-- pagebreak -->\n## Introduction\n\nWrite your technical thoughts, code walkthroughs, or system design insights here.\n\n### 1. Key Concept & Theory\n\nExplain the core idea with examples and clear constraints.\n\n```cpp\n// Sample Code Snippet\n#include <iostream>\n\nvoid solve() {\n    std::cout << \"Hello from Harman's Engineering Journal!\" << std::endl;\n}\n```\n\n> [!NOTE]\n> Add architectural notes, trade-offs, and latency considerations here.\n\n### 2. Summary & Takeaways\n- Point 1: Systematic pattern recognition\n- Point 2: Cache locality & state space compression\n\n\n<!-- pagebreak -->\n\n## Introduction\n\nWrite your technical thoughts, code walkthroughs, or system design insights here.\n\n### 1. Key Concept & Theory\n\nExplain the core idea with examples and clear constraints.\n\n```cpp\n// Sample Code Snippet\n#include <iostream>\n\nvoid solve() {\n    std::cout << \"Hello from Harman's Engineering Journal!\" << std::endl;\n}\n```\n\n> [!NOTE]\n> Add architectural notes, trade-offs, and latency considerations here.\n\n### 2. Summary & Takeaways\n- Point 1: Systematic pattern recognition\n- Point 2: Cache locality & state space compression\n\n<!-- pagebreak -->\n\n## Introduction\n\nWrite your technical thoughts, code walkthroughs, or system design insights here.\n\n### 1. Key Concept & Theory\n\nExplain the core idea with examples and clear constraints.\n\n```cpp\n// Sample Code Snippet\n#include <iostream>\n\nvoid solve() {\n    std::cout << \"Hello from Harman's Engineering Journal!\" << std::endl;\n}\n```\n\n> [!NOTE]\n> Add architectural notes, trade-offs, and latency considerations here.\n\n### 2. Summary & Takeaways\n- Point 1: Systematic pattern recognition\n- Point 2: Cache locality & state space compression",
+    "category": "Algorithms",
+    "tags": [
+      "LeetCode",
+      "Algorithms",
+      "System Design"
+    ],
+    "readTime": "2 min read",
+    "isDraft": false,
+    "author": {
+      "name": "Harman",
+      "signature": "Harmanpreet Singh",
+      "role": "Backend & Distributed Systems Engineer"
+    },
+    "id": "blog-1788603538450",
+    "publishedAt": "Sep 05, 2026",
+    "views": 0,
+    "likes": 0
+  },
+  {
     "id": "leetcode-patterns-dp-distributed",
     "slug": "pattern-recognition-leetcode-dp-distributed-systems",
     "title": "Pattern Recognition in LeetCode: From Dynamic Programming to Distributed Systems",

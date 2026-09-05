@@ -808,56 +808,78 @@ button:focus-visible {
   }
 }
 
-/* Book Reading Mode & Ink Animations */
-@keyframes bookPageFlipNext {
+/* Real 3D Book Page Turn Architecture */
+.book-stage {
+  perspective: 2400px;
+  transform-style: preserve-3d;
+}
+
+@keyframes turnLeafForward {
   0% {
-    transform: perspective(1400px) rotateY(0deg);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transform: rotateY(0deg) translateZ(2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     opacity: 1;
+    filter: brightness(1);
   }
-  45% {
-    transform: perspective(1400px) rotateY(-36deg) skewY(-1.5deg) scale(0.97);
-    box-shadow: -20px 20px 40px rgba(0, 0, 0, 0.35);
-    opacity: 0.85;
+  30% {
+    transform: rotateY(-30deg) skewY(-1deg) translateZ(12px) scale(0.99);
+    box-shadow: -15px 12px 35px rgba(0, 0, 0, 0.28);
+    filter: brightness(0.96);
   }
-  55% {
-    transform: perspective(1400px) rotateY(36deg) skewY(1.5deg) scale(0.97);
-    box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.35);
-    opacity: 0.85;
+  65% {
+    transform: rotateY(-80deg) skewY(-1.8deg) translateZ(16px) scale(0.97);
+    box-shadow: -28px 18px 45px rgba(0, 0, 0, 0.38);
+    opacity: 0.95;
+    filter: brightness(0.9);
   }
   100% {
-    transform: perspective(1400px) rotateY(0deg) scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    opacity: 1;
+    transform: rotateY(-130deg) skewY(-2deg) translateZ(4px) scale(0.95);
+    box-shadow: -35px 22px 50px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    filter: brightness(0.82);
   }
 }
 
-@keyframes bookPageFlipPrev {
+@keyframes turnLeafBackward {
   0% {
-    transform: perspective(1400px) rotateY(0deg);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    opacity: 1;
+    transform: rotateY(-130deg) skewY(2deg) translateZ(4px) scale(0.95);
+    box-shadow: -35px 22px 50px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    filter: brightness(0.82);
   }
-  45% {
-    transform: perspective(1400px) rotateY(36deg) skewY(1.5deg) scale(0.97);
-    box-shadow: 20px 20px 40px rgba(0, 0, 0, 0.35);
-    opacity: 0.85;
+  35% {
+    transform: rotateY(-80deg) skewY(1.8deg) translateZ(16px) scale(0.97);
+    box-shadow: -28px 18px 45px rgba(0, 0, 0, 0.38);
+    opacity: 0.95;
+    filter: brightness(0.9);
   }
-  55% {
-    transform: perspective(1400px) rotateY(-36deg) skewY(-1.5deg) scale(0.97);
-    box-shadow: -20px 20px 40px rgba(0, 0, 0, 0.35);
-    opacity: 0.85;
+  70% {
+    transform: rotateY(-30deg) skewY(1deg) translateZ(12px) scale(0.99);
+    box-shadow: -15px 12px 35px rgba(0, 0, 0, 0.28);
+    filter: brightness(0.96);
   }
   100% {
-    transform: perspective(1400px) rotateY(0deg) scale(1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transform: rotateY(0deg) translateZ(2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes underPageShadowSweep {
+  0% {
+    opacity: 0.55;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.08) 35%, transparent 100%);
+  }
+  100% {
+    opacity: 0;
+    background: linear-gradient(to right, transparent 0%, transparent 100%);
   }
 }
 
 @keyframes inkWashSweep {
   0% {
-    opacity: 0.8;
+    opacity: 0.75;
     background-position: -200% 0;
   }
   100% {
@@ -866,32 +888,40 @@ button:focus-visible {
   }
 }
 
-.book-flip-next {
-  animation: bookPageFlipNext 0.55s cubic-bezier(0.25, 1, 0.5, 1) both;
+.leaf-turn-forward {
+  animation: turnLeafForward 0.62s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   transform-origin: left center;
+  backface-visibility: hidden;
+  will-change: transform, opacity, box-shadow;
 }
 
-.book-flip-prev {
-  animation: bookPageFlipPrev 0.55s cubic-bezier(0.25, 1, 0.5, 1) both;
-  transform-origin: right center;
+.leaf-turn-backward {
+  animation: turnLeafBackward 0.62s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform-origin: left center;
+  backface-visibility: hidden;
+  will-change: transform, opacity, box-shadow;
+}
+
+.under-page-shadow {
+  animation: underPageShadowSweep 0.62s ease-out forwards;
 }
 
 .ink-sheen-sweep {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    hsl(var(--primary) / 0.12) 40%,
-    hsl(var(--primary) / 0.28) 50%,
-    hsl(var(--primary) / 0.12) 60%,
+    hsl(var(--primary) / 0.1) 35%,
+    hsl(var(--primary) / 0.22) 50%,
+    hsl(var(--primary) / 0.1) 65%,
     transparent 100%
   );
   background-size: 200% 100%;
-  animation: inkWashSweep 0.65s ease-out forwards;
+  animation: inkWashSweep 0.7s ease-out forwards;
 }
 
 .book-paper-texture {
   box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    0 20px 40px -15px rgba(0, 0, 0, 0.25),
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    0 20px 45px -15px rgba(0, 0, 0, 0.3),
     inset 0 0 40px hsl(var(--primary) / 0.02);
 }

@@ -262,35 +262,42 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
     hasMultiplePages ? "book" : "scroll"
   );
   const [currentPage, setCurrentPage] = useState(0);
-  const [flipAnimation, setFlipAnimation] = useState<"none" | "next" | "prev">("none");
-  const [showInkSheen, setShowInkSheen] = useState(false);
+  const [isTurning, setIsTurning] = useState(false);
+  const [turningDirection, setTurningDirection] = useState<"forward" | "backward">("forward");
+  const [fromPage, setFromPage] = useState<number | null>(null);
+  const [toPage, setToPage] = useState<number | null>(null);
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
-  const flipToPage = (newPage: number, direction: "next" | "prev") => {
-    if (newPage < 0 || newPage >= pages.length || newPage === currentPage) return;
-    setFlipAnimation(direction);
-    setShowInkSheen(true);
-    setCurrentPage(newPage);
+  const flipToPage = (newPage: number) => {
+    if (isTurning || newPage < 0 || newPage >= pages.length || newPage === currentPage) return;
+
+    const direction = newPage > currentPage ? "forward" : "backward";
+    setTurningDirection(direction);
+    setFromPage(currentPage);
+    setToPage(newPage);
+    setIsTurning(true);
 
     if (pageContainerRef.current) {
       pageContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     setTimeout(() => {
-      setFlipAnimation("none");
-      setShowInkSheen(false);
-    }, 550);
+      setCurrentPage(newPage);
+      setIsTurning(false);
+      setFromPage(null);
+      setToPage(null);
+    }, 620);
   };
 
   const handleNextPage = () => {
     if (currentPage < pages.length - 1) {
-      flipToPage(currentPage + 1, "next");
+      flipToPage(currentPage + 1);
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 0) {
-      flipToPage(currentPage - 1, "prev");
+      flipToPage(currentPage - 1);
     }
   };
 
@@ -307,19 +314,19 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
       if (e.key === "ArrowRight" || e.key === "PageDown") {
         if (currentPage < pages.length - 1) {
           e.preventDefault();
-          flipToPage(currentPage + 1, "next");
+          flipToPage(currentPage + 1);
         }
       } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
         if (currentPage > 0) {
           e.preventDefault();
-          flipToPage(currentPage - 1, "prev");
+          flipToPage(currentPage - 1);
         }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [readingMode, hasMultiplePages, currentPage, pages.length]);
+  }, [readingMode, hasMultiplePages, currentPage, pages.length, isTurning]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -606,42 +613,101 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
               </div>
             </div>
 
-            <div className="relative perspective-1200">
-              <div
-                className={`relative rounded-3xl border border-border/80 bg-card/85 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-2xl overflow-hidden transition-all book-paper-texture ${
-                  flipAnimation === "next"
-                    ? "book-flip-next"
-                    : flipAnimation === "prev"
-                    ? "book-flip-prev"
-                    : ""
-                }`}
-              >
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+            {/* 3D Physical Book Leaf Turning Stage */}
+            <div className="relative book-stage min-h-[420px]">
+              {/* Forward Turn: Outgoing Page Flips to Left, Revealing Next Page Underneath */}
+              {isTurning && turningDirection === "forward" && toPage !== null && fromPage !== null && (
+                <>
+                  {/* Underneath Layer (Revealing Destination Page) */}
+                  <div className="relative rounded-3xl border border-border/80 bg-card/85 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-xl overflow-hidden book-paper-texture">
+                    <div className="absolute inset-0 under-page-shadow pointer-events-none z-10" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+                    <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
+                      <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
+                        Part {toPage + 1}
+                      </span>
+                      <span className="mono text-[0.65rem] text-muted-foreground">
+                        Page {toPage + 1} / {pages.length}
+                      </span>
+                    </div>
+                    <BlogContentRenderer content={pages[toPage]} />
+                  </div>
 
-                {showInkSheen && (
-                  <div className="pointer-events-none absolute inset-0 ink-sheen-sweep z-30" />
-                )}
+                  {/* Top Turning Leaf (Flipping Away Forward) */}
+                  <div className="absolute inset-0 z-20 rounded-3xl border border-border/80 bg-card/95 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-2xl overflow-hidden book-paper-texture leaf-turn-forward">
+                    <div className="pointer-events-none absolute inset-0 ink-sheen-sweep z-30" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+                    <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
+                      <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
+                        Part {fromPage + 1}
+                      </span>
+                      <span className="mono text-[0.65rem] text-muted-foreground">
+                        Page {fromPage + 1} / {pages.length}
+                      </span>
+                    </div>
+                    <BlogContentRenderer content={pages[fromPage]} />
+                  </div>
+                </>
+              )}
 
-                <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
-                  <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
-                    Part {currentPage + 1}
-                  </span>
-                  <span className="mono text-[0.65rem] text-muted-foreground">
-                    Page {currentPage + 1} / {pages.length}
-                  </span>
+              {/* Backward Turn: Incoming Page Lands from Left onto Previous Page */}
+              {isTurning && turningDirection === "backward" && toPage !== null && fromPage !== null && (
+                <>
+                  {/* Underneath Layer (Old Page Being Covered) */}
+                  <div className="relative rounded-3xl border border-border/80 bg-card/85 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-xl overflow-hidden book-paper-texture">
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+                    <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
+                      <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
+                        Part {fromPage + 1}
+                      </span>
+                      <span className="mono text-[0.65rem] text-muted-foreground">
+                        Page {fromPage + 1} / {pages.length}
+                      </span>
+                    </div>
+                    <BlogContentRenderer content={pages[fromPage]} />
+                  </div>
+
+                  {/* Incoming Turning Leaf (Landing onto Old Page) */}
+                  <div className="absolute inset-0 z-20 rounded-3xl border border-border/80 bg-card/95 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-2xl overflow-hidden book-paper-texture leaf-turn-backward">
+                    <div className="pointer-events-none absolute inset-0 ink-sheen-sweep z-30" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+                    <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
+                      <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
+                        Part {toPage + 1}
+                      </span>
+                      <span className="mono text-[0.65rem] text-muted-foreground">
+                        Page {toPage + 1} / {pages.length}
+                      </span>
+                    </div>
+                    <BlogContentRenderer content={pages[toPage]} />
+                  </div>
+                </>
+              )}
+
+              {/* Settled Static State (When Not Turning) */}
+              {!isTurning && (
+                <div className="relative rounded-3xl border border-border/80 bg-card/85 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-2xl overflow-hidden book-paper-texture">
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+                  <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
+                    <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
+                      Part {currentPage + 1}
+                    </span>
+                    <span className="mono text-[0.65rem] text-muted-foreground">
+                      Page {currentPage + 1} / {pages.length}
+                    </span>
+                  </div>
+                  <BlogContentRenderer content={pages[currentPage]} />
                 </div>
-
-                <BlogContentRenderer content={pages[currentPage]} />
-              </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl shadow-lg">
               <button
                 type="button"
                 onClick={handlePrevPage}
-                disabled={currentPage === 0}
+                disabled={currentPage === 0 || isTurning}
                 className={`mono text-xs px-4 py-2.5 rounded-full border transition-all inline-flex items-center gap-2 cursor-pointer shadow-sm ${
-                  currentPage === 0
+                  currentPage === 0 || isTurning
                     ? "opacity-30 border-border/40 text-muted-foreground cursor-not-allowed"
                     : "border-border/80 bg-secondary/50 text-foreground hover:border-primary hover:text-primary active:scale-95"
                 }`}
@@ -655,9 +721,8 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
                   <button
                     key={`page-dot-${idx}`}
                     type="button"
-                    onClick={() =>
-                      flipToPage(idx, idx > currentPage ? "next" : "prev")
-                    }
+                    disabled={isTurning}
+                    onClick={() => flipToPage(idx)}
                     className={`transition-all rounded-full cursor-pointer ${
                       idx === currentPage
                         ? "h-2.5 w-6 bg-primary shadow-sm shadow-primary/30"
