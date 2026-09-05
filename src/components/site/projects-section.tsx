@@ -148,14 +148,14 @@ export function ProjectsSection() {
                 style={{
                   zIndex: 10 + index,
                 }}
-                className={`sticky top-24 md:top-28 flex flex-col justify-between rounded-2xl border bg-[hsl(var(--card)/.98)] p-6 md:p-7 backdrop-blur-2xl shadow-2xl transition-all duration-300 ${
+                className={`relative md:sticky md:top-28 flex flex-col justify-between rounded-2xl border bg-[hsl(var(--card)/.98)] p-5 sm:p-6 md:p-7 backdrop-blur-2xl shadow-2xl transition-all duration-300 ${
                   isActive
                     ? "border-primary/55 ring-1 ring-primary/25 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                     : "border-border/60 hover:border-border"
                 }`}
               >
                 {/* Neat Card Top Bar */}
-                <div className="flex items-center justify-between border-b border-border/40 pb-3.5 mb-5">
+                <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4 md:pb-3.5 md:mb-5">
                   <div className="flex items-center gap-3">
                     <span className="mono text-[0.65rem] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold border border-primary/25">
                       0{index + 1}
@@ -173,9 +173,9 @@ export function ProjectsSection() {
                 </div>
 
                 {/* Neat Card Body: 2-Column Responsive Split */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-start">
                   {/* Image Column */}
-                  <div className="md:col-span-5 relative aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-xl border border-foreground/10 bg-secondary/30 group">
+                  <div className="md:col-span-5 relative aspect-[16/9] sm:aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-xl border border-foreground/10 bg-secondary/30 group">
                     {project.image ? (
                       <img
                         src={project.image}
@@ -190,12 +190,12 @@ export function ProjectsSection() {
                   </div>
 
                   {/* Content Column */}
-                  <div className="md:col-span-7 flex flex-col justify-between gap-3.5">
+                  <div className="md:col-span-7 flex flex-col justify-between gap-3">
                     <div>
                       <h3 className="serif text-2xl md:text-3xl font-normal text-foreground">
                         {project.name}
                       </h3>
-                      <p className="mt-2 text-sm leading-7 text-[hsl(var(--foreground)/.75)] font-sans font-normal">
+                      <p className="mt-2 text-sm leading-6 md:leading-7 text-[hsl(var(--foreground)/.75)] font-sans font-normal">
                         {project.description}
                       </p>
                     </div>
@@ -243,7 +243,7 @@ export function ProjectsSection() {
                 </div>
 
                 {/* Neat Card Footer */}
-                <div className="flex items-center justify-between border-t border-border/40 pt-3.5 mt-5">
+                <div className="flex items-center justify-between border-t border-border/40 pt-3 mt-4 md:pt-3.5 md:mt-5">
                   <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                     <span className="serif text-base font-normal italic tracking-tight text-foreground">
                       h<span className="text-primary not-italic font-mono">_</span>

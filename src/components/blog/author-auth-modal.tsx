@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, KeyRound, Check, X, ShieldAlert, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Lock, KeyRound, Check, X, ShieldAlert, Eye, EyeOff } from "lucide-react";
 
 interface AuthorAuthModalProps {
   isOpen: boolean;
@@ -23,10 +23,11 @@ export function AuthorAuthModal({
 
   if (!isOpen) return null;
 
-  const handleVerify = async (keyToVerify?: string) => {
-    const targetKey = (keyToVerify !== undefined ? keyToVerify : passkey).trim();
+  const handleVerify = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const targetKey = passkey.trim();
     if (!targetKey) {
-      setErrorMsg("Please enter Harman's author passkey.");
+      setErrorMsg("Please enter the access code.");
       return;
     }
 
@@ -51,7 +52,7 @@ export function AuthorAuthModal({
         onSuccess(data.token || targetKey);
         onClose();
       } else {
-        setErrorMsg(data.error || "Incorrect passkey. Only Harman can publish or edit articles.");
+        setErrorMsg(data.error || "Incorrect access code.");
       }
     } catch (err) {
       console.error(err);
@@ -59,16 +60,6 @@ export function AuthorAuthModal({
     } finally {
       setIsVerifying(false);
     }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleVerify();
-  };
-
-  const handleUseDefault = () => {
-    setPasskey("harman_2026");
-    handleVerify("harman_2026");
   };
 
   return (
@@ -99,25 +90,15 @@ export function AuthorAuthModal({
         </div>
 
         <p className="text-xs text-foreground/75 font-sans leading-relaxed mb-4">
-          This journal is written and curated by <strong className="font-semibold text-foreground">Harman</strong>. Enter your author passkey to unlock writing, editing, and publishing permissions.
+          This journal is written and curated solely by <strong className="font-semibold text-foreground">Harman</strong>. Enter access code to continue.
         </p>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleVerify} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label className="mono text-[0.62rem] uppercase tracking-wider text-muted-foreground">
-                Author Passkey
-              </label>
-              <button
-                type="button"
-                onClick={handleUseDefault}
-                className="mono text-[0.6rem] text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Sparkles size={10} />
-                <span>Fill Default (harman_2026)</span>
-              </button>
-            </div>
+            <label className="mono text-[0.62rem] uppercase tracking-wider text-muted-foreground">
+              Enter access code
+            </label>
             <div className="relative">
               <KeyRound
                 size={14}
@@ -130,7 +111,7 @@ export function AuthorAuthModal({
                   setPasskey(e.target.value);
                   setErrorMsg("");
                 }}
-                placeholder="Enter author passkey (e.g. harman_2026)..."
+                placeholder="Enter access code..."
                 autoFocus
                 className="w-full rounded-xl border border-border/80 bg-background/80 pl-9 pr-10 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
@@ -138,7 +119,7 @@ export function AuthorAuthModal({
                 type="button"
                 onClick={() => setShowPasskey(!showPasskey)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-                title={showPasskey ? "Hide passkey" : "Show passkey"}
+                title={showPasskey ? "Hide access code" : "Show access code"}
               >
                 {showPasskey ? <EyeOff size={14} /> : <Eye size={14} />}
               </button>
@@ -180,4 +161,5 @@ export function AuthorAuthModal({
     </div>
   );
 }
+
 

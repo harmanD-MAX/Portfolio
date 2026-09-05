@@ -403,21 +403,6 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
               </div>
             </div>
           </div>
-
-          {/* Blog Article Bottom Brand Bar */}
-          <div className="mt-8 flex items-center justify-between border-t border-border/40 pt-6">
-            <div className="flex items-center gap-2">
-              <span className="serif text-xl font-normal italic tracking-tight text-foreground">
-                h<span className="text-primary not-italic font-mono">_</span>
-              </span>
-              <span className="mono text-[0.65rem] text-muted-foreground">
-                Harman · Portfolio & Engineering Journal
-              </span>
-            </div>
-            <span className="mono text-[0.62rem] text-muted-foreground">
-              © {new Date().getFullYear()}
-            </span>
-          </div>
         </div>
       </article>
 
