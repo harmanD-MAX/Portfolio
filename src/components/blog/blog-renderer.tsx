@@ -20,6 +20,8 @@ import {
   Code as CodeIcon,
   Layers,
   Maximize2,
+  Minimize2,
+  X,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { AuthorAuthModal } from "./author-auth-modal";
@@ -29,6 +31,16 @@ function FullHtmlAppViewer({ html }: { html: string }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeHeight, setIframeHeight] = useState("1200px");
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen]);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -63,39 +75,73 @@ function FullHtmlAppViewer({ html }: { html: string }) {
     <div
       className={`my-6 overflow-hidden rounded-2xl border border-primary/30 bg-card shadow-2xl transition-all ${
         isFullscreen
-          ? "fixed inset-0 z-50 rounded-none border-none p-0 m-0 w-screen h-screen bg-background"
+          ? "fixed inset-0 z-50 rounded-none border-none p-0 m-0 w-screen h-screen bg-background flex flex-col"
           : "w-full"
       }`}
     >
-      <div className="flex items-center justify-between border-b border-border/60 bg-secondary/40 px-4 py-2.5">
+      {/* Control / Header Bar */}
+      <div className="flex items-center justify-between border-b border-border/60 bg-secondary/40 px-4 py-2.5 flex-none select-none z-10 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div className="size-2.5 rounded-full bg-red-500/80" />
           <div className="size-2.5 rounded-full bg-amber-500/80" />
           <div className="size-2.5 rounded-full bg-emerald-500/80" />
           <span className="mono text-xs text-foreground/80 font-medium ml-2">
-            Interactive Full Guide & Application
+            {isFullscreen
+              ? "Interactive Fullscreen Guide (Press Esc to Minimize)"
+              : "Interactive Full Guide & Application"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          className="mono text-xs px-3 py-1 rounded-md border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer inline-flex items-center gap-1.5 transition-colors"
-        >
-          <Maximize2 size={12} />
-          <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
-        </button>
+
+        <div className="flex items-center gap-2">
+          {isFullscreen ? (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(false)}
+              className="mono text-xs px-3.5 py-1.5 rounded-full border border-primary/40 bg-primary/15 text-primary hover:bg-primary/25 cursor-pointer inline-flex items-center gap-1.5 transition-all shadow-sm font-medium"
+              title="Minimize back to article (Esc)"
+            >
+              <Minimize2 size={13} />
+              <span>Minimize Guide</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className="mono text-xs px-3 py-1 rounded-md border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+              title="Expand to Fullscreen"
+            >
+              <Maximize2 size={12} />
+              <span>Fullscreen</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      <iframe
-        ref={iframeRef}
-        title="Interactive HTML Guide"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
-        className="w-full border-none"
-        style={{
-          height: isFullscreen ? "calc(100vh - 42px)" : iframeHeight,
-          minHeight: "800px",
-        }}
-      />
+      <div className="relative flex-1 w-full overflow-hidden">
+        <iframe
+          ref={iframeRef}
+          title="Interactive HTML Guide"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
+          className="w-full border-none h-full"
+          style={{
+            height: isFullscreen ? "calc(100vh - 43px)" : iframeHeight,
+            minHeight: isFullscreen ? "100%" : "800px",
+          }}
+        />
+
+        {/* Floating Minimize Button when in Fullscreen */}
+        {isFullscreen && (
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(false)}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-card/90 border border-primary/40 text-primary shadow-2xl backdrop-blur-xl hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer font-mono text-xs font-semibold"
+            title="Minimize Guide (Esc)"
+          >
+            <Minimize2 size={14} />
+            <span>Minimize Guide</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
