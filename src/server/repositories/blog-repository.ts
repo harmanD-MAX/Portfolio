@@ -118,15 +118,13 @@ export class BlogRepository {
         query += " ORDER BY created_at DESC";
 
         const res = await pool.query(query, params);
-        if (res.rows && res.rows.length > 0) {
-          return res.rows.map(mapRowToBlogEntity);
-        }
+        return (res.rows || []).map(mapRowToBlogEntity);
       }
     } catch (err) {
       console.warn("PostgreSQL findAll error, using backup store:", err);
     }
 
-    // Fallback backup store
+    // Fallback backup store (only when DB is unreachable)
     const list = getBackupBlogs();
     return list.filter((b) => {
       if (!options?.includeDrafts && b.isDraft) return false;
@@ -160,11 +158,14 @@ export class BlogRepository {
         if (res.rows && res.rows.length > 0) {
           return mapRowToBlogEntity(res.rows[0]);
         }
+        // If DB is connected and 0 rows found, the article does not exist
+        return null;
       }
     } catch (err) {
       console.warn("PostgreSQL findBySlugOrId error, checking backup store:", err);
     }
 
+    // Fallback backup store (only when DB is unreachable)
     const list = getBackupBlogs();
     const cleanLower = clean.toLowerCase();
     const found = list.find(
