@@ -25,7 +25,8 @@ import {
   ChevronLeft,
   Lock,
   Check,
-  BookOpen,
+  Play,
+  Sparkles,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { BlogContentRenderer } from "./blog-renderer";
@@ -154,6 +155,105 @@ void solve() {
         start + prefix.length + selectedText.length
       );
     }, 50);
+  };
+
+  const insertInteractiveGuide = () => {
+    const sample = `\`\`\`interactive:Interactive Simulation & Algorithm Guide
+<style>
+  .guide-container {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px;
+    font-family: inherit;
+  }
+  .guide-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .guide-title { font-size: 15px; font-weight: 600; color: #f3f4f6; margin: 0; }
+  .guide-badge {
+    background: rgba(14, 165, 233, 0.15);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    color: #38bdf8;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-family: monospace;
+  }
+  .guide-bar-bg {
+    background: rgba(0, 0, 0, 0.4);
+    height: 10px;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin: 14px 0;
+  }
+  .guide-bar-fill {
+    height: 100%;
+    width: 20%;
+    background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+  }
+  .guide-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .guide-btn {
+    background: #0ea5e9;
+    color: white;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .guide-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .guide-btn:active { transform: scale(0.97); }
+  .guide-btn.danger { background: #ef4444; }
+  .guide-btn.secondary { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; }
+</style>
+
+<div class="guide-container">
+  <div class="guide-header">
+    <h4 class="guide-title">Interactive Buffer Simulation</h4>
+    <span class="guide-badge" id="sim-counter">Buffer: 2 / 10</span>
+  </div>
+
+  <div class="guide-bar-bg">
+    <div class="guide-bar-fill" id="sim-bar"></div>
+  </div>
+
+  <div class="guide-controls">
+    <button class="guide-btn" id="produce-btn">+ Produce Item</button>
+    <button class="guide-btn danger" id="consume-btn">- Consume Item</button>
+    <button class="guide-btn secondary" id="reset-btn">Reset</button>
+  </div>
+</div>
+
+<script>
+  let count = 2;
+  const max = 10;
+
+  const update = () => {
+    const pct = (count / max) * 100;
+    root.querySelector('#sim-bar').style.width = pct + '%';
+    root.querySelector('#sim-counter').innerText = 'Buffer: ' + count + ' / ' + max;
+  };
+
+  root.querySelector('#produce-btn').onclick = () => {
+    if (count < max) count++;
+    update();
+  };
+
+  root.querySelector('#consume-btn').onclick = () => {
+    if (count > 0) count--;
+    update();
+  };
+
+  root.querySelector('#reset-btn').onclick = () => {
+    count = 0;
+    update();
+  };
+</script>
+\`\`\`\n`;
+    insertFormatting("\n" + sample, "\n", "");
   };
 
   const triggerSaveWithAuthCheck = (publishDraft: boolean) => {
@@ -550,6 +650,15 @@ void solve() {
               </button>
               <button
                 type="button"
+                onClick={insertInteractiveGuide}
+                className="px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer inline-flex items-center gap-1.5 mono text-[0.68rem] font-semibold"
+                title="Insert Live Interactive Guide (HTML + CSS + JS)"
+              >
+                <Play size={10} className="fill-emerald-400" />
+                <span>Interactive Guide</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => insertFormatting("> ", "", "Notable quote or key takeaway")}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
                 title="Blockquote"
@@ -587,19 +696,6 @@ void solve() {
                 title="Divider Line"
               >
                 <Minus size={14} />
-              </button>
-
-              <div className="h-4 w-px bg-border/60 mx-1" />
-
-              {/* Page Break / New Book Page */}
-              <button
-                type="button"
-                onClick={() => insertFormatting("\n\n<!-- pagebreak -->\n\n")}
-                className="px-2.5 py-1 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all cursor-pointer inline-flex items-center gap-1.5 text-[0.68rem] mono font-medium shadow-xs"
-                title="Insert Page Break (creates a new page in Book Mode)"
-              >
-                <BookOpen size={12} />
-                <span>+ Page Break</span>
               </button>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -15,15 +15,229 @@ import {
   AlertTriangle,
   Loader2,
   Flame,
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
+  Play,
+  RefreshCw,
+  Code as CodeIcon,
   Layers,
-  FileText,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { AuthorAuthModal } from "./author-auth-modal";
 import { useRouter } from "next/navigation";
+
+function isInteractiveBlock(lang: string) {
+  const l = lang.toLowerCase().trim();
+  return (
+    l === "interactive" ||
+    l === "html:interactive" ||
+    l === "html:preview" ||
+    l === "widget" ||
+    l === "live" ||
+    l === "guide" ||
+    l === "sandbox" ||
+    l === "playground" ||
+    l.startsWith("interactive:") ||
+    l.startsWith("widget:") ||
+    l.startsWith("guide:")
+  );
+}
+
+function extractWidgetTitle(lang: string) {
+  if (lang.includes(":")) {
+    const parts = lang.split(":");
+    if (
+      parts.length > 1 &&
+      parts[1].trim() &&
+      parts[1].trim() !== "interactive" &&
+      parts[1].trim() !== "preview"
+    ) {
+      return parts.slice(1).join(":").trim();
+    }
+  }
+  return "Interactive Guide";
+}
+
+function InteractiveWidget({
+  code,
+  language,
+  title = "Interactive Guide",
+}: {
+  code: string;
+  language: string;
+  title?: string;
+}) {
+  const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
+  const [key, setKey] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeTab !== "preview" || !containerRef.current) return;
+    setRuntimeError(null);
+    const container = containerRef.current;
+    container.innerHTML = "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "interactive-guide-root w-full";
+    wrapper.innerHTML = code;
+    container.appendChild(wrapper);
+
+    // Extract and execute scripts safely within local container context
+    try {
+      const scripts = wrapper.querySelectorAll("script");
+      scripts.forEach((oldScript) => {
+        const newScript = document.createElement("script");
+        Array.from(oldScript.attributes).forEach((attr) => {
+          newScript.setAttribute(attr.name, attr.value);
+        });
+        const scriptBody = oldScript.textContent || "";
+        newScript.textContent = `
+          (function() {
+            try {
+              const root = document.currentScript ? document.currentScript.closest('.interactive-guide-root') : document;
+              ${scriptBody}
+            } catch(err) {
+              console.error("Interactive Guide Script Error:", err);
+            }
+          })();
+        `;
+        oldScript.parentNode?.replaceChild(newScript, oldScript);
+      });
+    } catch (err: any) {
+      console.error(err);
+      setRuntimeError(err?.message || "Error running interactive script");
+    }
+  }, [code, activeTab, key]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleReset = () => {
+    setKey((prev) => prev + 1);
+  };
+
+  return (
+    <div className="my-8 overflow-hidden rounded-2xl border border-primary/35 bg-card/85 backdrop-blur-xl shadow-2xl transition-all">
+      {/* Widget Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-secondary/30 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center size-5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+            <Play size={10} className="fill-emerald-400 ml-0.5" />
+          </div>
+          <span className="mono text-xs font-semibold text-foreground">
+            {title}
+          </span>
+          <span className="mono text-[0.62rem] px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium hidden sm:inline">
+            Interactive
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors cursor-pointer"
+            title="Reset Simulation"
+          >
+            <RefreshCw size={13} />
+          </button>
+          <div className="h-3.5 w-px bg-border/60 mx-1" />
+          <button
+            type="button"
+            onClick={() => setActiveTab("preview")}
+            className={`mono text-[0.68rem] px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              activeTab === "preview"
+                ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+            }`}
+          >
+            Interactive Demo
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("code")}
+            className={`mono text-[0.68rem] px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              activeTab === "code"
+                ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+            }`}
+          >
+            Source Code
+          </button>
+          {activeTab === "code" && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="ml-1 mono text-[0.68rem] px-2 py-1 rounded-md border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer inline-flex items-center gap-1"
+            >
+              {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+              <span>{copied ? "Copied" : "Copy"}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Widget Body */}
+      {activeTab === "preview" ? (
+        <div className="p-4 sm:p-6 bg-background/50 overflow-x-auto min-h-[120px]">
+          {runtimeError && (
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 mono text-xs text-red-400">
+              Simulation Error: {runtimeError}
+            </div>
+          )}
+          <div ref={containerRef} className="w-full" />
+        </div>
+      ) : (
+        <div className="p-4 bg-[#0d1419] overflow-x-auto font-mono text-xs text-[#e6edf3] leading-relaxed">
+          <pre>
+            <code>{code}</code>
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RawHtmlBlock({ html }: { html: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    container.innerHTML = "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "raw-html-article-embed w-full";
+    wrapper.innerHTML = html;
+    container.appendChild(wrapper);
+
+    // Re-execute scripts
+    const scripts = wrapper.querySelectorAll("script");
+    scripts.forEach((oldScript) => {
+      const newScript = document.createElement("script");
+      Array.from(oldScript.attributes).forEach((attr) => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      const scriptBody = oldScript.textContent || "";
+      newScript.textContent = `
+        (function() {
+          try {
+            const root = document.currentScript ? document.currentScript.closest('.raw-html-article-embed') : document;
+            ${scriptBody}
+          } catch(err) {
+            console.error("Direct Script Error:", err);
+          }
+        })();
+      `;
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+    });
+  }, [html]);
+
+  return <div ref={containerRef} className="my-6 w-full overflow-x-auto" />;
+}
 
 function CodeBlock({ code, language }: { code: string; language: string }) {
   const [copied, setCopied] = useState(false);
@@ -78,6 +292,8 @@ export function BlogContentRenderer({ content }: { content: string }) {
     let codeLanguage = "";
     let codeBuffer: string[] = [];
     let blockquoteBuffer: string[] = [];
+    let inHtmlBlock = false;
+    let htmlBuffer: string[] = [];
 
     const flushBlockquote = (key: number) => {
       if (blockquoteBuffer.length > 0) {
@@ -94,36 +310,44 @@ export function BlogContentRenderer({ content }: { content: string }) {
       }
     };
 
-    lines.forEach((line, index) => {
-      if (line.trim().toLowerCase().match(/<!--\s*page(?:break)?\s*-->/)) {
-        flushBlockquote(index);
+    const flushHtmlBlock = (key: number) => {
+      if (htmlBuffer.length > 0) {
         elements.push(
-          <div key={`pagebreak-${index}`} className="my-10 flex items-center justify-center gap-3 select-none">
-            <div className="h-px flex-1 bg-border/60 border-dashed border-t" />
-            <span className="mono text-[0.65rem] uppercase tracking-widest text-primary font-medium px-3 py-1 rounded-full bg-primary/10 border border-primary/20 flex items-center gap-1.5">
-              <BookOpen size={11} />
-              Page Break
-            </span>
-            <div className="h-px flex-1 bg-border/60 border-dashed border-t" />
-          </div>
+          <RawHtmlBlock key={`html-${key}`} html={htmlBuffer.join("\n")} />
         );
-        return;
+        htmlBuffer = [];
+        inHtmlBlock = false;
       }
+    };
 
+    lines.forEach((line, index) => {
+      // Code block handling
       if (line.trim().startsWith("```")) {
         if (inCodeBlock) {
-          elements.push(
-            <CodeBlock
-              key={`code-${index}`}
-              code={codeBuffer.join("\n")}
-              language={codeLanguage}
-            />
-          );
+          if (isInteractiveBlock(codeLanguage)) {
+            elements.push(
+              <InteractiveWidget
+                key={`interactive-${index}`}
+                code={codeBuffer.join("\n")}
+                language={codeLanguage}
+                title={extractWidgetTitle(codeLanguage)}
+              />
+            );
+          } else {
+            elements.push(
+              <CodeBlock
+                key={`code-${index}`}
+                code={codeBuffer.join("\n")}
+                language={codeLanguage}
+              />
+            );
+          }
           codeBuffer = [];
           inCodeBlock = false;
           codeLanguage = "";
         } else {
           flushBlockquote(index);
+          flushHtmlBlock(index);
           inCodeBlock = true;
           codeLanguage = line.trim().replace(/^```/, "").trim();
         }
@@ -132,6 +356,30 @@ export function BlogContentRenderer({ content }: { content: string }) {
 
       if (inCodeBlock) {
         codeBuffer.push(line);
+        return;
+      }
+
+      // Raw multi-line HTML block detection (<style>, <script>, <div, <section, <canvas, <table, <form, <details)
+      const trimmed = line.trim();
+      const isHtmlTagStart = /^<(style|script|div|section|canvas|svg|details|table|form|iframe|figure)(\s|>)/i.test(
+        trimmed
+      );
+
+      if (isHtmlTagStart && !inHtmlBlock) {
+        flushBlockquote(index);
+        inHtmlBlock = true;
+        htmlBuffer.push(line);
+        return;
+      }
+
+      if (inHtmlBlock) {
+        htmlBuffer.push(line);
+        const isHtmlTagEnd = /<\/(style|script|div|section|canvas|svg|details|table|form|iframe|figure)>$/i.test(
+          trimmed
+        );
+        if (isHtmlTagEnd) {
+          flushHtmlBlock(index);
+        }
         return;
       }
 
@@ -220,6 +468,7 @@ export function BlogContentRenderer({ content }: { content: string }) {
     });
 
     flushBlockquote(lines.length);
+    flushHtmlBlock(lines.length);
     return elements;
   };
 
@@ -248,77 +497,6 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
   const [isLiking, setIsLiking] = useState(false);
   const [likeParticleBurst, setLikeParticleBurst] = useState(false);
   const viewRecordedRef = useRef(false);
-
-  const pages = useMemo(() => {
-    const raw = blog.content
-      .split(/<!--\s*page(?:break)?\s*-->/i)
-      .map((p) => p.trim())
-      .filter(Boolean);
-    return raw.length > 0 ? raw : [blog.content];
-  }, [blog.content]);
-
-  const hasMultiplePages = pages.length > 1;
-  const [readingMode, setReadingMode] = useState<"book" | "scroll">(
-    hasMultiplePages ? "book" : "scroll"
-  );
-  const [currentPage, setCurrentPage] = useState(0);
-  const [slideDirection, setSlideDirection] = useState<"next" | "prev" | "none">("none");
-  const pageContainerRef = useRef<HTMLDivElement>(null);
-
-  const flipToPage = (newPage: number) => {
-    if (newPage < 0 || newPage >= pages.length || newPage === currentPage) return;
-
-    const direction = newPage > currentPage ? "next" : "prev";
-    setSlideDirection(direction);
-    setCurrentPage(newPage);
-
-    if (pageContainerRef.current) {
-      pageContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    setTimeout(() => {
-      setSlideDirection("none");
-    }, 280);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < pages.length - 1) {
-      flipToPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 0) {
-      flipToPage(currentPage - 1);
-    }
-  };
-
-  useEffect(() => {
-    if (readingMode !== "book" || !hasMultiplePages) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
-      ) {
-        return;
-      }
-      if (e.key === "ArrowRight" || e.key === "PageDown") {
-        if (currentPage < pages.length - 1) {
-          e.preventDefault();
-          flipToPage(currentPage + 1);
-        }
-      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
-        if (currentPage > 0) {
-          e.preventDefault();
-          flipToPage(currentPage - 1);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [readingMode, hasMultiplePages, currentPage, pages.length]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -481,265 +659,78 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
         </div>
       )}
 
-      <article className="mx-auto max-w-4xl py-8 md:py-12">
-        {/* If in Book Mode: Distraction-Free Focused Header */}
-        {readingMode === "book" && hasMultiplePages ? (
-          <div className="mb-6 flex items-center justify-between gap-3 border-b border-border/40 pb-4">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <span className="mono text-xs font-semibold px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary shadow-sm flex items-center gap-1.5 shrink-0">
-                <BookOpen size={13} />
-                <span>
-                  Page {currentPage + 1} of {pages.length}
-                </span>
+      <article className="mx-auto max-w-3xl py-12 md:py-16">
+        <div className="mb-8 border-b border-border/40 pb-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="mono text-xs text-primary font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-primary/10 border border-primary/25">
+                {blog.category}
               </span>
-              <h2 className="serif text-base md:text-lg text-foreground truncate font-normal hidden sm:block">
-                {blog.title}
-              </h2>
+              <span className="mono text-xs text-muted-foreground">
+                {blog.readTime}
+              </span>
+              <span className="mono text-xs text-muted-foreground hidden sm:inline">
+                · {blog.publishedAt}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setReadingMode("scroll")}
-                className="inline-flex items-center gap-1.5 mono text-[0.68rem] px-3 py-1.5 rounded-full border border-border/70 bg-secondary/40 text-foreground hover:border-primary hover:text-primary transition-all cursor-pointer shadow-xs"
-                title="Switch to Continuous Scroll Mode"
+                onClick={handleEditClick}
+                className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/30 text-foreground/80 hover:text-primary hover:border-primary transition-all cursor-pointer"
+                title="Author Edit"
               >
-                <FileText size={12} />
-                <span className="hidden sm:inline">Scroll View</span>
+                <Edit3 size={11} />
+                <span>Edit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-2.5 py-1 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all cursor-pointer"
+                title="Author Delete"
+              >
+                <Trash2 size={11} />
+                <span>Delete</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-1.5 mono text-[0.68rem] px-2.5 py-1.5 rounded-full border border-border/60 bg-secondary/30 text-foreground/80 hover:text-primary hover:border-primary transition-all cursor-pointer"
-                title="Share Article"
+                className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/30 text-foreground/80 hover:text-primary hover:border-primary transition-all cursor-pointer"
               >
-                <Share2 size={12} />
-                <span className="hidden md:inline">{copiedLink ? "Copied" : "Share"}</span>
+                <Share2 size={11} />
+                <span>{copiedLink ? "Link Copied" : "Share"}</span>
               </button>
             </div>
           </div>
-        ) : (
-          /* Standard Scroll Mode Header */
-          <div className="mb-8 border-b border-border/40 pb-8">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <span className="mono text-xs text-primary font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-primary/10 border border-primary/25">
-                  {blog.category}
-                </span>
-                <span className="mono text-xs text-muted-foreground">
-                  {blog.readTime}
-                </span>
-                <span className="mono text-xs text-muted-foreground hidden sm:inline">
-                  · {blog.publishedAt}
-                </span>
-              </div>
 
-              <div className="flex items-center gap-2">
-                {hasMultiplePages && (
-                  <button
-                    type="button"
-                    onClick={() => setReadingMode("book")}
-                    className="inline-flex items-center gap-1.5 mono text-[0.68rem] px-3 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-all cursor-pointer shadow-sm"
-                    title="Switch to Book Mode"
-                  >
-                    <BookOpen size={12} />
-                    <span>Book Mode</span>
-                  </button>
-                )}
+          <h1 className="serif text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-foreground mt-6 leading-[1.05]">
+            {blog.title}
+          </h1>
 
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/30 text-foreground/80 hover:text-primary hover:border-primary transition-all cursor-pointer"
-                  title="Author Edit"
+          {blog.excerpt && (
+            <p className="mt-4 text-lg md:text-xl font-serif text-muted-foreground italic leading-relaxed">
+              &ldquo;{blog.excerpt}&rdquo;
+            </p>
+          )}
+
+          {blog.tags && blog.tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-1.5">
+              {blog.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="mono text-[0.7rem] px-2 py-0.5 rounded-md bg-secondary/40 text-foreground/75 border border-border/40"
                 >
-                  <Edit3 size={11} />
-                  <span>Edit</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDeleteClick}
-                  className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-2.5 py-1 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all cursor-pointer"
-                  title="Author Delete"
-                >
-                  <Trash2 size={11} />
-                  <span>Delete</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/30 text-foreground/80 hover:text-primary hover:border-primary transition-all cursor-pointer"
-                >
-                  <Share2 size={11} />
-                  <span>{copiedLink ? "Link Copied" : "Share"}</span>
-                </button>
-              </div>
-            </div>
-
-            <h1 className="serif text-4xl sm:text-5xl md:text-6xl font-normal tracking-tight text-foreground mt-6 leading-[1.05]">
-              {blog.title}
-            </h1>
-
-            {blog.excerpt && (
-              <p className="mt-4 text-lg md:text-xl font-serif text-muted-foreground italic leading-relaxed">
-                &ldquo;{blog.excerpt}&rdquo;
-              </p>
-            )}
-
-            {blog.tags && blog.tags.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-1.5">
-                {blog.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="mono text-[0.7rem] px-2 py-0.5 rounded-md bg-secondary/40 text-foreground/75 border border-border/40"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Distraction-Free Book View */}
-        {readingMode === "book" && hasMultiplePages ? (
-          <div className="relative my-4 select-text" ref={pageContainerRef}>
-            {/* Progress Track */}
-            <div className="mb-4 flex items-center justify-between gap-4 px-2">
-              <span className="mono text-[0.7rem] text-muted-foreground">
-                Reading Chapter {currentPage + 1} of {pages.length}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="mono text-[0.7rem] font-medium text-foreground">
-                  {Math.round(((currentPage + 1) / pages.length) * 100)}%
+                  #{tag}
                 </span>
-                <div className="w-28 sm:w-36 h-1.5 rounded-full bg-secondary/80 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${((currentPage + 1) / pages.length) * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
+          )}
+        </div>
 
-            {/* Left & Right Interactive Side Margins with Floating Turn Buttons */}
-            <div className="relative flex items-center justify-center">
-              {/* Left Side Turn Button */}
-              <button
-                type="button"
-                onClick={handlePrevPage}
-                disabled={currentPage === 0}
-                className={`hidden md:flex absolute -left-14 top-1/2 -translate-y-1/2 z-40 size-12 items-center justify-center rounded-full border border-border/70 bg-card/90 backdrop-blur-xl shadow-xl transition-all ${
-                  currentPage === 0
-                    ? "opacity-20 cursor-not-allowed text-muted-foreground"
-                    : "text-foreground hover:bg-primary hover:text-primary-foreground hover:scale-110 hover:border-primary active:scale-95 cursor-pointer shadow-primary/20"
-                }`}
-                title="Previous Page (← Arrow Key)"
-              >
-                <ChevronLeft size={22} />
-              </button>
-
-              {/* Right Side Turn Button */}
-              <button
-                type="button"
-                onClick={handleNextPage}
-                disabled={currentPage === pages.length - 1}
-                className={`hidden md:flex absolute -right-14 top-1/2 -translate-y-1/2 z-40 size-12 items-center justify-center rounded-full border border-border/70 bg-card/90 backdrop-blur-xl shadow-xl transition-all ${
-                  currentPage === pages.length - 1
-                    ? "opacity-20 cursor-not-allowed text-muted-foreground"
-                    : "text-foreground hover:bg-primary hover:text-primary-foreground hover:scale-110 hover:border-primary active:scale-95 cursor-pointer shadow-primary/20"
-                }`}
-                title="Next Page (→ Arrow Key)"
-              >
-                <ChevronRight size={22} />
-              </button>
-
-              {/* Ultra-Smooth Full-Page Article Reader View */}
-              <div
-                key={`page-${currentPage}`}
-                className={`relative w-full rounded-3xl border border-border/80 bg-card/85 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-xl overflow-hidden book-paper-texture min-h-[460px] ${
-                  slideDirection === "next"
-                    ? "page-slide-next"
-                    : slideDirection === "prev"
-                    ? "page-slide-prev"
-                    : ""
-                }`}
-              >
-                {/* Book Spine Shadow Accent */}
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
-
-                <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
-                  <span className="mono text-[0.68rem] uppercase tracking-widest text-primary font-medium">
-                    Page {currentPage + 1} of {pages.length}
-                  </span>
-                  <span className="mono text-[0.65rem] text-muted-foreground hidden sm:inline">
-                    Use ← and → keys or side buttons to turn
-                  </span>
-                </div>
-
-                {/* Pure Page Content */}
-                <BlogContentRenderer content={pages[currentPage]} />
-              </div>
-            </div>
-
-            {/* Bottom Book Controls Bar */}
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl shadow-lg">
-              <button
-                type="button"
-                onClick={handlePrevPage}
-                disabled={currentPage === 0}
-                className={`mono text-xs px-5 py-2.5 rounded-full border transition-all inline-flex items-center gap-2 cursor-pointer shadow-sm ${
-                  currentPage === 0
-                    ? "opacity-30 border-border/40 text-muted-foreground cursor-not-allowed"
-                    : "border-border/80 bg-secondary/50 text-foreground hover:border-primary hover:text-primary active:scale-95"
-                }`}
-              >
-                <ChevronLeft size={16} />
-                <span>Previous Page</span>
-              </button>
-
-              <div className="flex items-center gap-1.5">
-                {pages.map((_, idx) => (
-                  <button
-                    key={`page-dot-${idx}`}
-                    type="button"
-                    onClick={() => flipToPage(idx)}
-                    className={`transition-all rounded-full cursor-pointer ${
-                      idx === currentPage
-                        ? "h-2.5 w-6 bg-primary shadow-sm shadow-primary/30"
-                        : "h-2.5 w-2.5 bg-secondary/80 hover:bg-primary/50"
-                    }`}
-                    title={`Go to Page ${idx + 1}`}
-                  />
-                ))}
-              </div>
-
-              {currentPage < pages.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={handleNextPage}
-                  className="mono text-xs px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-primary/25 active:scale-95 inline-flex items-center gap-2 cursor-pointer"
-                >
-                  <span>Next Page</span>
-                  <ChevronRight size={16} />
-                </button>
-              ) : (
-                <span className="mono text-xs px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-flex items-center gap-1.5 font-medium">
-                  <Check size={14} />
-                  <span>Completed Reading</span>
-                </span>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* Continuous Scroll View */
-          <BlogContentRenderer content={blog.content} />
-        )}
+        <BlogContentRenderer content={blog.content} />
 
         <div className="my-14 rounded-2xl border border-border/60 bg-card/60 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
