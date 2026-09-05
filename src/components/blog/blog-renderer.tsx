@@ -19,10 +19,86 @@ import {
   RefreshCw,
   Code as CodeIcon,
   Layers,
+  Maximize2,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { AuthorAuthModal } from "./author-auth-modal";
 import { useRouter } from "next/navigation";
+
+function FullHtmlAppViewer({ html }: { html: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState("1200px");
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    const handleResize = () => {
+      try {
+        if (doc.body) {
+          const scrollHeight = Math.max(
+            doc.body.scrollHeight,
+            doc.documentElement.scrollHeight,
+            900
+          );
+          setIframeHeight(`${scrollHeight + 60}px`);
+        }
+      } catch (e) {}
+    };
+
+    iframe.onload = handleResize;
+    const interval = setInterval(handleResize, 1500);
+    return () => clearInterval(interval);
+  }, [html]);
+
+  return (
+    <div
+      className={`my-6 overflow-hidden rounded-2xl border border-primary/30 bg-card shadow-2xl transition-all ${
+        isFullscreen
+          ? "fixed inset-0 z-50 rounded-none border-none p-0 m-0 w-screen h-screen bg-background"
+          : "w-full"
+      }`}
+    >
+      <div className="flex items-center justify-between border-b border-border/60 bg-secondary/40 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="size-2.5 rounded-full bg-red-500/80" />
+          <div className="size-2.5 rounded-full bg-amber-500/80" />
+          <div className="size-2.5 rounded-full bg-emerald-500/80" />
+          <span className="mono text-xs text-foreground/80 font-medium ml-2">
+            Interactive Full Guide & Application
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="mono text-xs px-3 py-1 rounded-md border border-border/60 text-muted-foreground hover:text-foreground cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+        >
+          <Maximize2 size={12} />
+          <span>{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+        </button>
+      </div>
+
+      <iframe
+        ref={iframeRef}
+        title="Interactive HTML Guide"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
+        className="w-full border-none"
+        style={{
+          height: isFullscreen ? "calc(100vh - 42px)" : iframeHeight,
+          minHeight: "800px",
+        }}
+      />
+    </div>
+  );
+}
 
 function isInteractiveBlock(lang: string) {
   const l = lang.toLowerCase().trim();
@@ -285,6 +361,15 @@ function CodeBlock({ code, language }: { code: string; language: string }) {
 }
 
 export function BlogContentRenderer({ content }: { content: string }) {
+  const isFullHtmlDoc =
+    /^\s*<!DOCTYPE\s+html/i.test(content) ||
+    /^\s*<html/i.test(content) ||
+    (content.includes("<head>") && content.includes("<body>"));
+
+  if (isFullHtmlDoc) {
+    return <FullHtmlAppViewer html={content} />;
+  }
+
   const renderMarkdown = (text: string) => {
     const lines = text.split("\n");
     const elements: React.ReactNode[] = [];
