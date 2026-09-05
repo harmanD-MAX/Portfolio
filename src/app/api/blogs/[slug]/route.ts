@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BlogRepository } from "@/server/repositories/blog-repository";
-import { isValidAuthorPasskey } from "@/server/auth";
+import { verifyAuthorRequest } from "@/server/auth";
 
 export async function GET(
   request: NextRequest,
@@ -32,8 +32,7 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const passkey = request.headers.get("x-author-key");
-    if (!isValidAuthorPasskey(passkey)) {
+    if (!verifyAuthorRequest(request)) {
       return NextResponse.json(
         { success: false, error: "Unauthorized. Valid author passkey required." },
         { status: 401 }
@@ -66,8 +65,7 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const passkey = request.headers.get("x-author-key");
-    if (!isValidAuthorPasskey(passkey)) {
+    if (!verifyAuthorRequest(request)) {
       return NextResponse.json(
         { success: false, error: "Unauthorized. Valid author passkey required." },
         { status: 401 }

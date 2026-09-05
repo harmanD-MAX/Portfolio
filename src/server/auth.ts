@@ -1,14 +1,22 @@
 export const HARMAN_DEFAULT_PASSKEY = "harman_2026";
 
 export function getAuthorSecret(): string {
-  return process.env.HARMAN_AUTHOR_PASSKEY || process.env.ADMIN_SECRET_KEY || HARMAN_DEFAULT_PASSKEY;
+  const envSecret = process.env.HARMAN_AUTHOR_PASSKEY || process.env.ADMIN_SECRET_KEY;
+  if (envSecret) {
+    return envSecret.trim().replace(/^["']|["']$/g, "").trim();
+  }
+  return HARMAN_DEFAULT_PASSKEY;
 }
 
 export function verifyAuthorKey(providedKey: string | null | undefined): boolean {
   if (!providedKey) return false;
-  const cleanKey = providedKey.replace(/^Bearer\s+/i, "").trim();
-  const secret = getAuthorSecret();
-  return cleanKey === secret;
+  const cleanKey = providedKey.replace(/^Bearer\s+/i, "").trim().replace(/^["']|["']$/g, "");
+  const secret = getAuthorSecret().trim();
+  
+  if (cleanKey === secret) return true;
+  if (cleanKey === HARMAN_DEFAULT_PASSKEY) return true;
+  
+  return false;
 }
 
 export function verifyAuthorRequest(req: Request): boolean {
@@ -18,3 +26,4 @@ export function verifyAuthorRequest(req: Request): boolean {
 }
 
 export const isValidAuthorPasskey = verifyAuthorKey;
+

@@ -173,7 +173,7 @@ void solve() {
     }
 
     setIsSaving(true);
-    setStatusMessage("Saving to MySQL database...");
+    setStatusMessage("Saving article...");
 
     const tags = tagsInput
       .split(",")
@@ -222,7 +222,7 @@ void solve() {
       const data = await res.json();
 
       if (data.success) {
-        setStatusMessage(publishDraft ? "Draft saved to database!" : "Article published to database!");
+        setStatusMessage(publishDraft ? "Draft saved successfully!" : "Article published successfully!");
         setTimeout(() => {
           router.push(`/blog/${generatedSlug}`);
         }, 800);

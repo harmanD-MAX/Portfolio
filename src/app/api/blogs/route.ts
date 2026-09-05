@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BlogRepository } from "@/server/repositories/blog-repository";
-import { isValidAuthorPasskey } from "@/server/auth";
+import { verifyAuthorRequest } from "@/server/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,8 +27,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const passkey = request.headers.get("x-author-key");
-    if (!isValidAuthorPasskey(passkey)) {
+    if (!verifyAuthorRequest(request)) {
       return NextResponse.json(
         { success: false, error: "Unauthorized. Valid author passkey required." },
         { status: 401 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, KeyRound, Check, X, ShieldAlert } from "lucide-react";
+import { Lock, KeyRound, Check, X, ShieldAlert, Eye, EyeOff, Sparkles } from "lucide-react";
 
 interface AuthorAuthModalProps {
   isOpen: boolean;
@@ -17,14 +17,15 @@ export function AuthorAuthModal({
   actionTitle = "Author Verification Required",
 }: AuthorAuthModalProps) {
   const [passkey, setPasskey] = useState("");
+  const [showPasskey, setShowPasskey] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!passkey.trim()) {
+  const handleVerify = async (keyToVerify?: string) => {
+    const targetKey = (keyToVerify !== undefined ? keyToVerify : passkey).trim();
+    if (!targetKey) {
       setErrorMsg("Please enter Harman's author passkey.");
       return;
     }
@@ -36,7 +37,7 @@ export function AuthorAuthModal({
       const res = await fetch("/api/auth/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passkey: passkey.trim() }),
+        body: JSON.stringify({ passkey: targetKey }),
       });
 
       const data = await res.json();
@@ -44,10 +45,10 @@ export function AuthorAuthModal({
       if (data.success && data.authenticated) {
         // Store in localStorage & sessionStorage so author stays authenticated
         if (typeof window !== "undefined") {
-          localStorage.setItem("harman_author_key", data.token || passkey.trim());
-          sessionStorage.setItem("harman_author_key", data.token || passkey.trim());
+          localStorage.setItem("harman_author_key", data.token || targetKey);
+          sessionStorage.setItem("harman_author_key", data.token || targetKey);
         }
-        onSuccess(data.token || passkey.trim());
+        onSuccess(data.token || targetKey);
         onClose();
       } else {
         setErrorMsg(data.error || "Incorrect passkey. Only Harman can publish or edit articles.");
@@ -58,6 +59,16 @@ export function AuthorAuthModal({
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleVerify();
+  };
+
+  const handleUseDefault = () => {
+    setPasskey("harman_2026");
+    handleVerify("harman_2026");
   };
 
   return (
@@ -87,32 +98,50 @@ export function AuthorAuthModal({
           </div>
         </div>
 
-        <p className="text-xs text-foreground/75 font-sans leading-relaxed mb-5">
-          This journal is written and curated solely by <strong className="font-semibold text-foreground">Harman</strong>. Readers have read-only access. To write, publish, or edit an article, please enter Harman&apos;s author passkey.
+        <p className="text-xs text-foreground/75 font-sans leading-relaxed mb-4">
+          This journal is written and curated by <strong className="font-semibold text-foreground">Harman</strong>. Enter your author passkey to unlock writing, editing, and publishing permissions.
         </p>
 
         {/* Form */}
-        <form onSubmit={handleVerify} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="mono text-[0.62rem] uppercase tracking-wider text-muted-foreground">
-              Author Passkey
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="mono text-[0.62rem] uppercase tracking-wider text-muted-foreground">
+                Author Passkey
+              </label>
+              <button
+                type="button"
+                onClick={handleUseDefault}
+                className="mono text-[0.6rem] text-primary hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Sparkles size={10} />
+                <span>Fill Default (harman_2026)</span>
+              </button>
+            </div>
             <div className="relative">
               <KeyRound
                 size={14}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <input
-                type="password"
+                type={showPasskey ? "text" : "password"}
                 value={passkey}
                 onChange={(e) => {
                   setPasskey(e.target.value);
                   setErrorMsg("");
                 }}
-                placeholder="Enter author passkey..."
+                placeholder="Enter author passkey (e.g. harman_2026)..."
                 autoFocus
-                className="w-full rounded-xl border border-border/80 bg-background/80 pl-9 pr-4 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-xl border border-border/80 bg-background/80 pl-9 pr-10 py-2.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
+              <button
+                type="button"
+                onClick={() => setShowPasskey(!showPasskey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                title={showPasskey ? "Hide passkey" : "Show passkey"}
+              >
+                {showPasskey ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
             </div>
           </div>
 
@@ -151,3 +180,4 @@ export function AuthorAuthModal({
     </div>
   );
 }
+
