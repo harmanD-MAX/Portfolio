@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, PenTool, Search } from "lucide-react";
@@ -18,10 +18,14 @@ const CATEGORIES = [
 
 export function BlogListingClient({ initialBlogs = [] }: { initialBlogs: BlogEntity[] }) {
   const router = useRouter();
-  const [blogs] = useState<BlogEntity[]>(initialBlogs);
+  const [blogs, setBlogs] = useState<BlogEntity[]>(initialBlogs);
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  useEffect(() => {
+    setBlogs(initialBlogs);
+  }, [initialBlogs]);
 
   const handleWriteClick = (e: React.MouseEvent) => {
     e.preventDefault();

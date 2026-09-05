@@ -277,7 +277,8 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
       });
       const data = await res.json();
       if (data.success) {
-        router.push("/blog");
+        router.refresh();
+        window.location.href = "/blog";
       } else {
         alert(data.error || "Failed to delete article");
       }

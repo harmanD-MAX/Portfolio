@@ -6,6 +6,9 @@ import { SiteNavbar } from "@/components/site/navbar";
 import { BlogBackground } from "@/components/blog/blog-background";
 import { BlogArticleView } from "@/components/blog/blog-renderer";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

@@ -145,14 +145,17 @@ export class BlogRepository {
   }
 
   static async findBySlugOrId(slugOrId: string): Promise<BlogEntity | null> {
+    if (!slugOrId) return null;
+    const clean = decodeURIComponent(slugOrId).trim();
+
     try {
       await ensureSchema();
       const pool = getPostgresPool();
 
       if (pool) {
         const res = await pool.query(
-          "SELECT * FROM blogs WHERE slug = $1 OR id = $1 LIMIT 1",
-          [slugOrId]
+          "SELECT * FROM blogs WHERE slug = $1 OR id = $1 OR LOWER(slug) = LOWER($1) LIMIT 1",
+          [clean]
         );
         if (res.rows && res.rows.length > 0) {
           return mapRowToBlogEntity(res.rows[0]);
@@ -163,7 +166,14 @@ export class BlogRepository {
     }
 
     const list = getBackupBlogs();
-    const found = list.find((b) => b.slug === slugOrId || b.id === slugOrId);
+    const cleanLower = clean.toLowerCase();
+    const found = list.find(
+      (b) =>
+        b.slug === clean ||
+        b.id === clean ||
+        b.slug?.toLowerCase() === cleanLower ||
+        b.id?.toLowerCase() === cleanLower
+    );
     return found || null;
   }
 
@@ -175,9 +185,17 @@ export class BlogRepository {
       year: "numeric",
     });
 
+    const cleanSlug =
+      (blog.slug || blog.title)
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || `article-${Date.now()}`;
+
     const newEntity: BlogEntity = {
       ...blog,
       id,
+      slug: cleanSlug,
       publishedAt,
       author: {
         name: "Harman",
@@ -188,10 +206,15 @@ export class BlogRepository {
 
     // Save to backup file
     const list = getBackupBlogs();
-    list.unshift(newEntity);
+    const existingIdx = list.findIndex((b) => b.slug === cleanSlug);
+    if (existingIdx >= 0) {
+      list[existingIdx] = newEntity;
+    } else {
+      list.unshift(newEntity);
+    }
     saveBackupBlogs(list);
 
-    // Save to Supabase PostgreSQL
+    // Save to Supabase PostgreSQL with ON CONFLICT resolution
     try {
       await ensureSchema();
       const pool = getPostgresPool();
@@ -199,10 +222,19 @@ export class BlogRepository {
         await pool.query(
           `INSERT INTO blogs (
             id, slug, title, excerpt, content, category, tags, read_time, published_at, is_draft, author_name, author_role
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          ON CONFLICT (slug) DO UPDATE SET
+            title = EXCLUDED.title,
+            excerpt = EXCLUDED.excerpt,
+            content = EXCLUDED.content,
+            category = EXCLUDED.category,
+            tags = EXCLUDED.tags,
+            read_time = EXCLUDED.read_time,
+            is_draft = EXCLUDED.is_draft,
+            modified_at = CURRENT_TIMESTAMP`,
           [
             id,
-            blog.slug,
+            cleanSlug,
             blog.title,
             blog.excerpt,
             blog.content,
@@ -210,7 +242,7 @@ export class BlogRepository {
             JSON.stringify(blog.tags || []),
             blog.readTime,
             publishedAt,
-            blog.isDraft,
+            Boolean(blog.isDraft),
             "Harman",
             blog.author?.role || "Backend & Distributed Systems Engineer",
           ]
@@ -224,8 +256,16 @@ export class BlogRepository {
   }
 
   static async update(slugOrId: string, updates: Partial<BlogEntity>): Promise<BlogEntity | null> {
+    const clean = decodeURIComponent(slugOrId).trim();
     const list = getBackupBlogs();
-    const index = list.findIndex((b) => b.slug === slugOrId || b.id === slugOrId);
+    const cleanLower = clean.toLowerCase();
+    const index = list.findIndex(
+      (b) =>
+        b.slug === clean ||
+        b.id === clean ||
+        b.slug?.toLowerCase() === cleanLower ||
+        b.id?.toLowerCase() === cleanLower
+    );
 
     const updatedAt = new Date().toLocaleDateString("en-US", {
       month: "short",
@@ -248,7 +288,7 @@ export class BlogRepository {
       list[index] = updated;
       saveBackupBlogs(list);
     } else {
-      const existing = await BlogRepository.findBySlugOrId(slugOrId);
+      const existing = await BlogRepository.findBySlugOrId(clean);
       if (!existing) return null;
       updated = {
         ...existing,
@@ -304,9 +344,9 @@ export class BlogRepository {
 
         fields.push(`modified_at = CURRENT_TIMESTAMP`);
 
-        params.push(slugOrId);
+        params.push(clean);
         await pool.query(
-          `UPDATE blogs SET ${fields.join(", ")} WHERE slug = $${paramIdx} OR id = $${paramIdx}`,
+          `UPDATE blogs SET ${fields.join(", ")} WHERE slug = $${paramIdx} OR id = $${paramIdx} OR LOWER(slug) = LOWER($${paramIdx})`,
           params
         );
       }
@@ -318,23 +358,39 @@ export class BlogRepository {
   }
 
   static async delete(slugOrId: string): Promise<boolean> {
+    if (!slugOrId) return false;
+    const clean = decodeURIComponent(slugOrId).trim();
+    const cleanLower = clean.toLowerCase();
+
     const list = getBackupBlogs();
-    const filtered = list.filter((b) => b.slug !== slugOrId && b.id !== slugOrId);
-    if (filtered.length !== list.length) {
+    const initialLen = list.length;
+    const filtered = list.filter(
+      (b) =>
+        b.slug !== clean &&
+        b.id !== clean &&
+        b.slug?.toLowerCase() !== cleanLower &&
+        b.id?.toLowerCase() !== cleanLower
+    );
+    if (filtered.length !== initialLen) {
       saveBackupBlogs(filtered);
     }
 
+    let dbDeleted = false;
     try {
       await ensureSchema();
       const pool = getPostgresPool();
       if (pool) {
-        const res = await pool.query("DELETE FROM blogs WHERE slug = $1 OR id = $1", [slugOrId]);
-        return (res.rowCount ?? 0) > 0 || filtered.length !== list.length;
+        const res = await pool.query(
+          "DELETE FROM blogs WHERE slug = $1 OR id = $1 OR LOWER(slug) = LOWER($1)",
+          [clean]
+        );
+        dbDeleted = (res.rowCount ?? 0) > 0;
       }
     } catch (err) {
       console.warn("PostgreSQL delete warning:", err);
     }
 
-    return filtered.length !== list.length;
+    return dbDeleted || filtered.length !== initialLen;
   }
 }
+

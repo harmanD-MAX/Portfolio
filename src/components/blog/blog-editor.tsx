@@ -223,9 +223,11 @@ void solve() {
 
       if (data.success) {
         setStatusMessage(publishDraft ? "Draft saved successfully!" : "Article published successfully!");
+        const targetSlug = data.blog?.slug || generatedSlug;
+        router.refresh();
         setTimeout(() => {
-          router.push(`/blog/${generatedSlug}`);
-        }, 800);
+          window.location.href = `/blog/${targetSlug}`;
+        }, 500);
       } else {
         if (res.status === 401) {
           setIsAuthModalOpen(true);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { BlogRepository } from "@/server/repositories/blog-repository";
 import { verifyAuthorRequest } from "@/server/auth";
 
@@ -37,16 +38,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, slug, excerpt, content, category, tags, readTime, isDraft } = body;
 
-    if (!title || !slug || !content) {
+    if (!title || !content) {
       return NextResponse.json(
-        { success: false, error: "Title, slug, and content are required." },
+        { success: false, error: "Title and content are required." },
         { status: 400 }
       );
     }
 
     const created = await BlogRepository.create({
       title,
-      slug,
+      slug: slug || "",
       excerpt: excerpt || "",
       content,
       category: category || "Algorithms",
@@ -60,6 +61,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    try {
+      revalidatePath("/blog");
+      revalidatePath(`/blog/${created.slug}`);
+      revalidatePath("/");
+    } catch {
+      // ignore
+    }
+
     return NextResponse.json({ success: true, blog: created }, { status: 201 });
   } catch (error: any) {
     console.error("POST /api/blogs error:", error);
@@ -69,3 +78,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

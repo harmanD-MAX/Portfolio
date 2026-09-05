@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { BlogRepository } from "@/server/repositories/blog-repository";
 import { verifyAuthorRequest } from "@/server/auth";
 
@@ -50,6 +51,15 @@ export async function PUT(
       );
     }
 
+    try {
+      revalidatePath("/blog");
+      revalidatePath(`/blog/${slug}`);
+      revalidatePath(`/blog/${updated.slug}`);
+      revalidatePath("/");
+    } catch {
+      // ignore
+    }
+
     return NextResponse.json({ success: true, blog: updated });
   } catch (error: any) {
     console.error("PUT /api/blogs/[slug] error:", error);
@@ -82,6 +92,14 @@ export async function DELETE(
       );
     }
 
+    try {
+      revalidatePath("/blog");
+      revalidatePath(`/blog/${slug}`);
+      revalidatePath("/");
+    } catch {
+      // ignore
+    }
+
     return NextResponse.json({ success: true, message: "Article deleted successfully" });
   } catch (error: any) {
     console.error("DELETE /api/blogs/[slug] error:", error);
@@ -91,3 +109,4 @@ export async function DELETE(
     );
   }
 }
+
