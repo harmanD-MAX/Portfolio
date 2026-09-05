@@ -243,11 +243,11 @@ export class BlogRepository {
             id,
             cleanSlug,
             blog.title,
-            blog.excerpt,
+            blog.excerpt || "",
             blog.content,
-            blog.category,
+            blog.category || "Algorithms",
             JSON.stringify(blog.tags || []),
-            blog.readTime,
+            blog.readTime || "5 min read",
             publishedAt,
             Boolean(blog.isDraft),
             "Harman",
@@ -255,8 +255,9 @@ export class BlogRepository {
           ]
         );
       }
-    } catch (err) {
-      console.warn("PostgreSQL insert warning (data preserved in backup):", err);
+    } catch (err: any) {
+      console.error("PostgreSQL insert error:", err);
+      throw new Error(`Database error: ${err.message || String(err)}`);
     }
 
     return newEntity;
