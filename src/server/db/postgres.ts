@@ -67,11 +67,16 @@ export async function initPostgresSchema(): Promise<boolean> {
           published_at VARCHAR(64) NOT NULL,
           updated_at VARCHAR(64) NULL,
           is_draft BOOLEAN NOT NULL DEFAULT FALSE,
+          views INTEGER NOT NULL DEFAULT 0,
+          likes INTEGER NOT NULL DEFAULT 0,
           author_name VARCHAR(128) NOT NULL DEFAULT 'Harman',
           author_role VARCHAR(256) NOT NULL DEFAULT 'Backend & Distributed Systems Engineer',
           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+
+        ALTER TABLE blogs ADD COLUMN IF NOT EXISTS views INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE blogs ADD COLUMN IF NOT EXISTS likes INTEGER NOT NULL DEFAULT 0;
 
         CREATE INDEX IF NOT EXISTS idx_blogs_slug ON blogs(slug);
         CREATE INDEX IF NOT EXISTS idx_blogs_category ON blogs(category);

@@ -24,6 +24,7 @@ import {
   Info,
   ChevronLeft,
   Lock,
+  Check,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { BlogContentRenderer } from "./blog-renderer";
@@ -97,6 +98,7 @@ void solve() {
 
   const [viewMode, setViewMode] = useState<"edit" | "preview" | "split">("split");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveStep, setSaveStep] = useState<"idle" | "saving" | "indexing" | "complete">("idle");
   const [statusMessage, setStatusMessage] = useState("");
 
   // History for Undo/Redo
@@ -173,6 +175,7 @@ void solve() {
     }
 
     setIsSaving(true);
+    setSaveStep("saving");
     setStatusMessage("Saving article...");
 
     const tags = tagsInput
@@ -222,13 +225,19 @@ void solve() {
       const data = await res.json();
 
       if (data.success) {
-        setStatusMessage(publishDraft ? "Draft saved successfully!" : "Article published successfully!");
+        setSaveStep("indexing");
+        setTimeout(() => {
+          setSaveStep("complete");
+        }, 500);
+
         const targetSlug = data.blog?.slug || generatedSlug;
         router.refresh();
         setTimeout(() => {
           window.location.href = `/blog/${targetSlug}`;
-        }, 500);
+        }, 1200);
       } else {
+        setIsSaving(false);
+        setSaveStep("idle");
         if (res.status === 401) {
           setIsAuthModalOpen(true);
           setPendingPublishStatus(publishDraft);
@@ -237,9 +246,9 @@ void solve() {
       }
     } catch (err) {
       console.error(err);
-      setStatusMessage("Error communicating with server.");
-    } finally {
       setIsSaving(false);
+      setSaveStep("idle");
+      setStatusMessage("Error communicating with server.");
     }
   };
 
@@ -253,6 +262,54 @@ void solve() {
 
   return (
     <>
+      {/* Animated Publishing & Saving Overlay */}
+      {isSaving && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="relative flex flex-col items-center gap-5 p-8 rounded-3xl border border-primary/30 bg-card/90 shadow-2xl max-w-sm text-center">
+            {/* Glowing Ring Animation */}
+            <div className="relative flex items-center justify-center size-20 rounded-2xl bg-primary/15 border border-primary/40 text-primary">
+              {saveStep === "complete" ? (
+                <div className="flex items-center justify-center size-12 rounded-full bg-emerald-500 text-white animate-in zoom-in-75 duration-300">
+                  <Check size={28} />
+                </div>
+              ) : (
+                <>
+                  <Send size={28} className="animate-pulse text-primary" />
+                  <div className="absolute inset-0 rounded-2xl border-2 border-primary/40 animate-ping opacity-75" />
+                </>
+              )}
+            </div>
+
+            <div>
+              <h3 className="serif text-2xl font-normal text-foreground">
+                {saveStep === "complete"
+                  ? "Article Published!"
+                  : saveStep === "indexing"
+                  ? "Synchronizing Route..."
+                  : "Publishing to Database..."}
+              </h3>
+              <p className="mono text-xs text-muted-foreground mt-1.5">
+                {saveStep === "complete"
+                  ? "Redirecting to your live article..."
+                  : "Saving content, formatting, and tags..."}
+              </p>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-48 h-1.5 rounded-full bg-secondary overflow-hidden">
+              <div
+                className={`h-full bg-primary rounded-full transition-all duration-500 ${
+                  saveStep === "saving"
+                    ? "w-1/2 animate-pulse"
+                    : saveStep === "indexing"
+                    ? "w-5/6"
+                    : "w-full bg-emerald-500"
+                }`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-6xl py-8 md:py-12">
         {/* Top Header / Actions Bar */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border/50 pb-5">

@@ -14,6 +14,8 @@ export type BlogEntity = {
   publishedAt: string;
   updatedAt?: string;
   isDraft: boolean;
+  views?: number;
+  likes?: number;
   author: {
     name: string;
     signature: string;
@@ -34,7 +36,11 @@ function getBackupBlogs(): BlogEntity[] {
       const data = fs.readFileSync(fileToRead, "utf-8");
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return parsed.map((item: any) => ({
+          ...item,
+          views: Number(item.views || 0),
+          likes: Number(item.likes || 0),
+        }));
       }
     }
   } catch (err) {
@@ -85,6 +91,8 @@ function mapRowToBlogEntity(row: any): BlogEntity {
     publishedAt: row.published_at || "",
     updatedAt: row.updated_at || undefined,
     isDraft: Boolean(row.is_draft),
+    views: Number(row.views || 0),
+    likes: Number(row.likes || 0),
     author: {
       name: "Harman",
       signature: "Harmanpreet Singh",
@@ -204,6 +212,8 @@ export class BlogRepository {
       id,
       slug: cleanSlug,
       publishedAt,
+      views: blog.views ?? 0,
+      likes: blog.likes ?? 0,
       author: {
         name: "Harman",
         signature: "Harmanpreet Singh",
@@ -399,6 +409,81 @@ export class BlogRepository {
     }
 
     return dbDeleted || filtered.length !== initialLen;
+  }
+
+  static async incrementViews(slugOrId: string): Promise<number> {
+    if (!slugOrId) return 0;
+    const clean = decodeURIComponent(slugOrId).trim();
+    const cleanLower = clean.toLowerCase();
+
+    try {
+      await ensureSchema();
+      const pool = getPostgresPool();
+      if (pool) {
+        const res = await pool.query(
+          "UPDATE blogs SET views = views + 1 WHERE slug = $1 OR id = $1 OR LOWER(slug) = LOWER($1) RETURNING views",
+          [clean]
+        );
+        if (res.rows && res.rows.length > 0) {
+          return Number(res.rows[0].views);
+        }
+      }
+    } catch (err) {
+      console.warn("PostgreSQL incrementViews error:", err);
+    }
+
+    const list = getBackupBlogs();
+    const item = list.find(
+      (b) =>
+        b.slug === clean ||
+        b.id === clean ||
+        b.slug?.toLowerCase() === cleanLower ||
+        b.id?.toLowerCase() === cleanLower
+    );
+    if (item) {
+      item.views = (item.views || 0) + 1;
+      saveBackupBlogs(list);
+      return item.views;
+    }
+    return 0;
+  }
+
+  static async toggleLikes(slugOrId: string, action: "like" | "unlike" = "like"): Promise<number> {
+    if (!slugOrId) return 0;
+    const clean = decodeURIComponent(slugOrId).trim();
+    const cleanLower = clean.toLowerCase();
+    const delta = action === "unlike" ? -1 : 1;
+
+    try {
+      await ensureSchema();
+      const pool = getPostgresPool();
+      if (pool) {
+        const res = await pool.query(
+          "UPDATE blogs SET likes = GREATEST(0, likes + $2) WHERE slug = $1 OR id = $1 OR LOWER(slug) = LOWER($1) RETURNING likes",
+          [clean, delta]
+        );
+        if (res.rows && res.rows.length > 0) {
+          return Number(res.rows[0].likes);
+        }
+      }
+    } catch (err) {
+      console.warn("PostgreSQL toggleLikes error:", err);
+    }
+
+    const list = getBackupBlogs();
+    const item = list.find(
+      (b) =>
+        b.slug === clean ||
+        b.id === clean ||
+        b.slug?.toLowerCase() === cleanLower ||
+        b.id?.toLowerCase() === cleanLower
+    );
+    if (item) {
+      item.likes = Math.max(0, (item.likes || 0) + delta);
+      saveBackupBlogs(list);
+      return item.likes;
+    }
+    return 0;
   }
 }
 
