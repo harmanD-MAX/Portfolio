@@ -262,10 +262,10 @@ void solve() {
 
   return (
     <>
-      {/* Animated Publishing & Saving Overlay */}
+      {/* Animated Publishing & Saving Overlay with soft blur */}
       {isSaving && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="relative flex flex-col items-center gap-5 p-8 rounded-3xl border border-primary/30 bg-card/90 shadow-2xl max-w-sm text-center">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="relative flex flex-col items-center gap-5 p-8 rounded-3xl border border-primary/30 bg-card/85 backdrop-blur-2xl shadow-2xl max-w-sm text-center">
             {/* Glowing Ring Animation */}
             <div className="relative flex items-center justify-center size-20 rounded-2xl bg-primary/15 border border-primary/40 text-primary">
               {saveStep === "complete" ? (

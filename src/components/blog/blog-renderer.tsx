@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -223,28 +223,36 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
   const [pendingAction, setPendingAction] = useState<"edit" | "delete" | null>(null);
 
   const [viewsCount, setViewsCount] = useState(blog.views || 0);
-
   const [likesCount, setLikesCount] = useState(blog.likes || 0);
   const [hasLiked, setHasLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [likeParticleBurst, setLikeParticleBurst] = useState(false);
+  const viewRecordedRef = useRef(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedLike = localStorage.getItem(`liked_blog_${blog.slug}`);
-      if (storedLike === "true") {
-        setHasLiked(true);
-      }
+    if (typeof window === "undefined") return;
+
+    const storedLike = localStorage.getItem(`liked_blog_${blog.slug}`);
+    if (storedLike === "true") {
+      setHasLiked(true);
     }
 
-    fetch(`/api/blogs/${blog.slug}/view`, { method: "POST" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && typeof data.views === "number") {
-          setViewsCount(data.views);
-        }
-      })
-      .catch(() => {});
+    const viewKey = `viewed_blog_${blog.slug}`;
+    const alreadyViewed = localStorage.getItem(viewKey);
+
+    if (!alreadyViewed && !viewRecordedRef.current) {
+      viewRecordedRef.current = true;
+      localStorage.setItem(viewKey, "true");
+
+      fetch(`/api/blogs/${blog.slug}/view`, { method: "POST" })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && typeof data.views === "number") {
+            setViewsCount(data.views);
+          }
+        })
+        .catch(() => {});
+    }
   }, [blog.slug]);
 
   const handleToggleLike = async () => {
@@ -335,10 +343,7 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
       });
       const data = await res.json();
       if (data.success) {
-        setTimeout(() => {
-          router.refresh();
-          window.location.href = "/blog";
-        }, 1200);
+        window.location.replace("/blog");
       } else {
         alert(data.error || "Failed to delete article");
         setIsDeleting(false);
@@ -361,8 +366,8 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
   return (
     <>
       {isDeleting && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="relative flex flex-col items-center gap-5 p-8 rounded-3xl border border-red-500/30 bg-card/90 shadow-2xl max-w-sm text-center">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/50 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="relative flex flex-col items-center gap-5 p-8 rounded-3xl border border-red-500/30 bg-card/85 backdrop-blur-2xl shadow-2xl max-w-sm text-center">
             <div className="relative flex items-center justify-center size-20 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-400">
               <Trash2 size={32} className="animate-bounce" />
               <div className="absolute inset-0 rounded-2xl border-2 border-red-500/30 animate-ping opacity-75" />
@@ -379,7 +384,7 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
 
             <div className="flex items-center gap-2 mono text-[0.65rem] text-primary">
               <Loader2 size={13} className="animate-spin" />
-              <span>Synchronizing cache...</span>
+              <span>Redirecting to blog index...</span>
             </div>
           </div>
         </div>
@@ -388,30 +393,19 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
       <article className="mx-auto max-w-3xl py-12 md:py-16">
         <div className="mb-8 border-b border-border/40 pb-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <span className="mono text-xs text-primary font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-primary/10 border border-primary/25">
                 {blog.category}
               </span>
               <span className="mono text-xs text-muted-foreground">
                 {blog.readTime}
               </span>
+              <span className="mono text-xs text-muted-foreground hidden sm:inline">
+                · {blog.publishedAt}
+              </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="mono text-xs px-2.5 py-1 rounded-full bg-secondary/40 border border-border/60 text-muted-foreground inline-flex items-center gap-1.5 shadow-sm">
-                <Eye size={13} className="text-primary" />
-                <span className="text-foreground/90 font-medium">
-                  {viewsCount.toLocaleString()}
-                </span>
-                <span className="text-[0.65rem] opacity-75">
-                  {viewsCount === 1 ? "view" : "views"}
-                </span>
-              </span>
-
-              <span className="mono text-xs text-muted-foreground hidden sm:inline">
-                {blog.publishedAt}
-              </span>
-
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleEditClick}
@@ -448,76 +442,90 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
           </h1>
 
           {blog.excerpt && (
-            <p className="mt-4 text-base md:text-lg leading-relaxed text-foreground/75 font-sans font-normal">
-              {blog.excerpt}
+            <p className="mt-4 text-lg md:text-xl font-serif text-muted-foreground italic leading-relaxed">
+              &ldquo;{blog.excerpt}&rdquo;
             </p>
           )}
 
-          <div className="flex flex-wrap gap-1.5 mt-6">
-            {blog.tags.map((tag) => (
-              <span
-                key={tag}
-                className="mono text-[0.62rem] px-2.5 py-0.5 rounded-md border border-border/50 bg-secondary/20 text-muted-foreground"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
+          {blog.tags && blog.tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-1.5">
+              {blog.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="mono text-[0.7rem] px-2 py-0.5 rounded-md bg-secondary/40 text-foreground/75 border border-border/40"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <BlogContentRenderer content={blog.content} />
 
-        <div className="my-14 rounded-2xl border border-border/60 bg-gradient-to-b from-card/80 to-card/40 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
+        <div className="my-14 rounded-2xl border border-border/60 bg-card/60 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2 mb-1.5">
                 <Flame size={16} className="text-primary animate-pulse" />
                 <span className="mono text-xs font-semibold uppercase tracking-wider text-primary">
-                  Enjoyed this engineering breakdown?
+                  Enjoyed this article?
                 </span>
               </div>
               <p className="text-sm text-foreground/75 font-sans leading-relaxed">
-                Leave a like to applaud this journal entry and support technical writings.
+                Applaud this journal entry and support technical writings.
               </p>
             </div>
 
-            <div className="relative">
-              {likeParticleBurst && (
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none flex items-center justify-center animate-bounce">
-                  <Sparkles size={20} className="text-red-400 animate-spin" />
-                </div>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-full border border-border/70 bg-secondary/40 text-muted-foreground shadow-sm">
+                <Eye size={15} className="text-primary" />
+                <span className="mono text-xs font-medium text-foreground">
+                  {viewsCount.toLocaleString()}
+                </span>
+                <span className="mono text-[0.65rem] text-muted-foreground">
+                  {viewsCount === 1 ? "view" : "views"}
+                </span>
+              </div>
 
-              <button
-                type="button"
-                onClick={handleToggleLike}
-                className={`group relative inline-flex items-center gap-2.5 px-6 py-3 rounded-full border transition-all duration-300 cursor-pointer shadow-lg active:scale-95 ${
-                  hasLiked
-                    ? "border-red-500/50 bg-red-500/15 text-red-400 shadow-red-500/20 ring-2 ring-red-500/25"
-                    : "border-border/80 bg-secondary/40 text-foreground hover:border-red-400 hover:text-red-400 hover:bg-red-500/10"
-                }`}
-              >
-                <Heart
-                  size={18}
-                  className={`transition-all duration-300 ${
+              <div className="relative">
+                {likeParticleBurst && (
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 pointer-events-none flex items-center justify-center animate-bounce">
+                    <Sparkles size={20} className="text-red-400 animate-spin" />
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleToggleLike}
+                  className={`group relative inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border transition-all duration-300 cursor-pointer shadow-lg active:scale-95 ${
                     hasLiked
-                      ? "fill-red-500 text-red-500 scale-110"
-                      : "text-foreground/80 group-hover:text-red-400 group-hover:scale-110"
+                      ? "border-red-500/50 bg-red-500/15 text-red-400 shadow-red-500/20 ring-2 ring-red-500/25"
+                      : "border-border/80 bg-secondary/40 text-foreground hover:border-red-400 hover:text-red-400 hover:bg-red-500/10"
                   }`}
-                />
-                <span className="mono text-xs font-semibold">
-                  {hasLiked ? "Liked" : "Like Article"}
-                </span>
-                <span className="mono text-xs px-2 py-0.5 rounded-full bg-background/80 border border-border/60 text-foreground font-mono">
-                  {likesCount}
-                </span>
-              </button>
+                >
+                  <Heart
+                    size={17}
+                    className={`transition-all duration-300 ${
+                      hasLiked
+                        ? "fill-red-500 text-red-500 scale-110"
+                        : "text-foreground/80 group-hover:text-red-400 group-hover:scale-110"
+                    }`}
+                  />
+                  <span className="mono text-xs font-semibold">
+                    {hasLiked ? "Liked" : "Like"}
+                  </span>
+                  <span className="mono text-xs px-2 py-0.5 rounded-full bg-background/80 border border-border/60 text-foreground font-mono">
+                    {likesCount}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="mt-8 border-t border-border/40 pt-10">
-          <div className="rounded-2xl border border-border/60 bg-[hsl(var(--card)/.75)] p-6 md:p-8 backdrop-blur-xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="rounded-2xl border border-border/60 bg-card/60 p-6 md:p-8 backdrop-blur-xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="serif text-2xl font-normal italic tracking-tight text-foreground">
@@ -546,8 +554,8 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
       </article>
 
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-2xl border border-red-500/40 bg-[hsl(var(--card))] p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/40 p-4 backdrop-blur-xl animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-red-500/40 bg-card/90 backdrop-blur-2xl p-6 sm:p-8 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/15 border border-red-500/30 text-red-400">
                 <AlertTriangle size={20} />
