@@ -21,12 +21,17 @@ export type BlogEntity = {
   };
 };
 
-const BACKUP_FILE = path.join(process.cwd(), "src", "server", "db", "data", "blogs.json");
+const SEED_FILE = path.join(process.cwd(), "src", "server", "db", "data", "blogs.json");
+const RUNTIME_FILE =
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+    ? path.join("/tmp", "blogs.json")
+    : SEED_FILE;
 
 function getBackupBlogs(): BlogEntity[] {
   try {
-    if (fs.existsSync(BACKUP_FILE)) {
-      const data = fs.readFileSync(BACKUP_FILE, "utf-8");
+    const fileToRead = fs.existsSync(RUNTIME_FILE) ? RUNTIME_FILE : SEED_FILE;
+    if (fs.existsSync(fileToRead)) {
+      const data = fs.readFileSync(fileToRead, "utf-8");
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
         return parsed;
@@ -40,8 +45,9 @@ function getBackupBlogs(): BlogEntity[] {
 
 function saveBackupBlogs(blogs: BlogEntity[]) {
   try {
-    fs.mkdirSync(path.dirname(BACKUP_FILE), { recursive: true });
-    fs.writeFileSync(BACKUP_FILE, JSON.stringify(blogs, null, 2), "utf-8");
+    const targetFile = RUNTIME_FILE;
+    fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+    fs.writeFileSync(targetFile, JSON.stringify(blogs, null, 2), "utf-8");
   } catch (err) {
     console.error("Failed to save backup blogs.json:", err);
   }

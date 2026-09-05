@@ -1,8 +1,10 @@
 import { Pool } from "pg";
 
-let pool: Pool | null = null;
-let connectionTested = false;
-let isPostgresRunning = false;
+const globalForPg = globalThis as unknown as {
+  pgPool?: Pool;
+  connectionTested?: boolean;
+  isPostgresRunning?: boolean;
+};
 
 export function getPostgresPool(): Pool | null {
   const connectionString =
@@ -16,35 +18,36 @@ export function getPostgresPool(): Pool | null {
     return null;
   }
 
-  if (!pool) {
+  if (!globalForPg.pgPool) {
     const isRemote =
       connectionString.includes("supabase") ||
+      connectionString.includes("aws") ||
       connectionString.includes("sslmode") ||
       !connectionString.includes("localhost");
 
-    pool = new Pool({
-      connectionString,
+    globalForPg.pgPool = new Pool({
+      connectionString: connectionString.trim().replace(/^["']|["']$/g, ""),
       ssl:
         process.env.NODE_ENV === "production" || isRemote
           ? { rejectUnauthorized: false }
           : undefined,
       max: 10,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 8000,
     });
   }
-  return pool;
+  return globalForPg.pgPool;
 }
 
 export async function initPostgresSchema(): Promise<boolean> {
-  if (connectionTested) {
-    return isPostgresRunning;
+  if (globalForPg.connectionTested) {
+    return Boolean(globalForPg.isPostgresRunning);
   }
 
   const dbPool = getPostgresPool();
   if (!dbPool) {
-    connectionTested = true;
-    isPostgresRunning = false;
+    globalForPg.connectionTested = true;
+    globalForPg.isPostgresRunning = false;
     return false;
   }
 
@@ -75,15 +78,16 @@ export async function initPostgresSchema(): Promise<boolean> {
         CREATE INDEX IF NOT EXISTS idx_blogs_draft ON blogs(is_draft);
       `);
 
-      isPostgresRunning = true;
-      connectionTested = true;
+      globalForPg.isPostgresRunning = true;
+      globalForPg.connectionTested = true;
       return true;
     } finally {
       client.release();
     }
   } catch (error) {
-    connectionTested = true;
-    isPostgresRunning = false;
+    console.error("PostgreSQL initialization error:", error);
+    globalForPg.connectionTested = true;
+    globalForPg.isPostgresRunning = false;
     return false;
   }
 }
