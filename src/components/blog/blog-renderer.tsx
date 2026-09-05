@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -15,6 +15,11 @@ import {
   AlertTriangle,
   Loader2,
   Flame,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Layers,
+  FileText,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { AuthorAuthModal } from "./author-auth-modal";
@@ -90,6 +95,21 @@ export function BlogContentRenderer({ content }: { content: string }) {
     };
 
     lines.forEach((line, index) => {
+      if (line.trim().toLowerCase().match(/<!--\s*page(?:break)?\s*-->/)) {
+        flushBlockquote(index);
+        elements.push(
+          <div key={`pagebreak-${index}`} className="my-10 flex items-center justify-center gap-3 select-none">
+            <div className="h-px flex-1 bg-border/60 border-dashed border-t" />
+            <span className="mono text-[0.65rem] uppercase tracking-widest text-primary font-medium px-3 py-1 rounded-full bg-primary/10 border border-primary/20 flex items-center gap-1.5">
+              <BookOpen size={11} />
+              Page Break
+            </span>
+            <div className="h-px flex-1 bg-border/60 border-dashed border-t" />
+          </div>
+        );
+        return;
+      }
+
       if (line.trim().startsWith("```")) {
         if (inCodeBlock) {
           elements.push(
@@ -228,6 +248,78 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
   const [isLiking, setIsLiking] = useState(false);
   const [likeParticleBurst, setLikeParticleBurst] = useState(false);
   const viewRecordedRef = useRef(false);
+
+  const pages = useMemo(() => {
+    const raw = blog.content
+      .split(/<!--\s*page(?:break)?\s*-->/i)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    return raw.length > 0 ? raw : [blog.content];
+  }, [blog.content]);
+
+  const hasMultiplePages = pages.length > 1;
+  const [readingMode, setReadingMode] = useState<"book" | "scroll">(
+    hasMultiplePages ? "book" : "scroll"
+  );
+  const [currentPage, setCurrentPage] = useState(0);
+  const [flipAnimation, setFlipAnimation] = useState<"none" | "next" | "prev">("none");
+  const [showInkSheen, setShowInkSheen] = useState(false);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
+
+  const flipToPage = (newPage: number, direction: "next" | "prev") => {
+    if (newPage < 0 || newPage >= pages.length || newPage === currentPage) return;
+    setFlipAnimation(direction);
+    setShowInkSheen(true);
+    setCurrentPage(newPage);
+
+    if (pageContainerRef.current) {
+      pageContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    setTimeout(() => {
+      setFlipAnimation("none");
+      setShowInkSheen(false);
+    }, 550);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < pages.length - 1) {
+      flipToPage(currentPage + 1, "next");
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 0) {
+      flipToPage(currentPage - 1, "prev");
+    }
+  };
+
+  useEffect(() => {
+    if (readingMode !== "book" || !hasMultiplePages) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+      if (e.key === "ArrowRight" || e.key === "PageDown") {
+        if (currentPage < pages.length - 1) {
+          e.preventDefault();
+          flipToPage(currentPage + 1, "next");
+        }
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        if (currentPage > 0) {
+          e.preventDefault();
+          flipToPage(currentPage - 1, "prev");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [readingMode, hasMultiplePages, currentPage, pages.length]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -406,6 +498,29 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
             </div>
 
             <div className="flex items-center gap-2">
+              {hasMultiplePages && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setReadingMode(readingMode === "book" ? "scroll" : "book")
+                  }
+                  className="inline-flex items-center gap-1.5 mono text-[0.65rem] px-3 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-all cursor-pointer shadow-sm"
+                  title="Toggle Book / Scroll Mode"
+                >
+                  {readingMode === "book" ? (
+                    <>
+                      <FileText size={11} />
+                      <span>Scroll Mode</span>
+                    </>
+                  ) : (
+                    <>
+                      <BookOpen size={11} />
+                      <span>Book Mode</span>
+                    </>
+                  )}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleEditClick}
@@ -461,7 +576,118 @@ export function BlogArticleView({ blog }: { blog: BlogEntity }) {
           )}
         </div>
 
-        <BlogContentRenderer content={blog.content} />
+        {readingMode === "book" && hasMultiplePages ? (
+          <div className="my-6" ref={pageContainerRef}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 mono text-xs font-semibold px-3 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary shadow-sm">
+                  <BookOpen size={13} />
+                  <span>
+                    Page {currentPage + 1} of {pages.length}
+                  </span>
+                </span>
+                <span className="mono text-[0.65rem] text-muted-foreground hidden sm:inline">
+                  (Use ← and → arrow keys to flip)
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="mono text-[0.68rem] text-muted-foreground">
+                  {Math.round(((currentPage + 1) / pages.length) * 100)}%
+                </span>
+                <div className="w-24 sm:w-32 h-1.5 rounded-full bg-secondary/80 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${((currentPage + 1) / pages.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="relative perspective-1200">
+              <div
+                className={`relative rounded-3xl border border-border/80 bg-card/85 p-6 sm:p-10 md:p-12 backdrop-blur-2xl shadow-2xl overflow-hidden transition-all book-paper-texture ${
+                  flipAnimation === "next"
+                    ? "book-flip-next"
+                    : flipAnimation === "prev"
+                    ? "book-flip-prev"
+                    : ""
+                }`}
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/30 via-primary/70 to-primary/30 opacity-70" />
+
+                {showInkSheen && (
+                  <div className="pointer-events-none absolute inset-0 ink-sheen-sweep z-30" />
+                )}
+
+                <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-6">
+                  <span className="mono text-[0.68rem] uppercase tracking-widest text-primary/80 font-medium">
+                    Part {currentPage + 1}
+                  </span>
+                  <span className="mono text-[0.65rem] text-muted-foreground">
+                    Page {currentPage + 1} / {pages.length}
+                  </span>
+                </div>
+
+                <BlogContentRenderer content={pages[currentPage]} />
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl shadow-lg">
+              <button
+                type="button"
+                onClick={handlePrevPage}
+                disabled={currentPage === 0}
+                className={`mono text-xs px-4 py-2.5 rounded-full border transition-all inline-flex items-center gap-2 cursor-pointer shadow-sm ${
+                  currentPage === 0
+                    ? "opacity-30 border-border/40 text-muted-foreground cursor-not-allowed"
+                    : "border-border/80 bg-secondary/50 text-foreground hover:border-primary hover:text-primary active:scale-95"
+                }`}
+              >
+                <ChevronLeft size={15} />
+                <span>Previous Page</span>
+              </button>
+
+              <div className="flex items-center gap-1.5">
+                {pages.map((_, idx) => (
+                  <button
+                    key={`page-dot-${idx}`}
+                    type="button"
+                    onClick={() =>
+                      flipToPage(idx, idx > currentPage ? "next" : "prev")
+                    }
+                    className={`transition-all rounded-full cursor-pointer ${
+                      idx === currentPage
+                        ? "h-2.5 w-6 bg-primary shadow-sm shadow-primary/30"
+                        : "h-2.5 w-2.5 bg-secondary/80 hover:bg-primary/50"
+                    }`}
+                    title={`Go to Page ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              {currentPage < pages.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={handleNextPage}
+                  className="mono text-xs px-5 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-primary/25 active:scale-95 inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Next Page</span>
+                  <ChevronRight size={15} />
+                </button>
+              ) : (
+                <span className="mono text-xs px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 inline-flex items-center gap-1.5 font-medium">
+                  <Check size={13} />
+                  <span>Finished Reading</span>
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <BlogContentRenderer content={blog.content} />
+        )}
 
         <div className="my-14 rounded-2xl border border-border/60 bg-card/60 p-6 sm:p-8 backdrop-blur-xl shadow-xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">

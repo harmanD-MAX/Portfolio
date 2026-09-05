@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   Lock,
   Check,
+  BookOpen,
 } from "lucide-react";
 import { BlogEntity } from "@/server/repositories/blog-repository";
 import { BlogContentRenderer } from "./blog-renderer";
@@ -586,6 +587,19 @@ void solve() {
                 title="Divider Line"
               >
                 <Minus size={14} />
+              </button>
+
+              <div className="h-4 w-px bg-border/60 mx-1" />
+
+              {/* Page Break / New Book Page */}
+              <button
+                type="button"
+                onClick={() => insertFormatting("\n\n<!-- pagebreak -->\n\n")}
+                className="px-2.5 py-1 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 transition-all cursor-pointer inline-flex items-center gap-1.5 text-[0.68rem] mono font-medium shadow-xs"
+                title="Insert Page Break (creates a new page in Book Mode)"
+              >
+                <BookOpen size={12} />
+                <span>+ Page Break</span>
               </button>
             </div>
 
