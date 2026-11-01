@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { experiences, SECTION_IDS } from "@/lib/site-data";
 
-import { Wireframe3D } from "./wireframe-3d";
 
 function useReveal<T extends HTMLElement = HTMLDivElement>() {
   const ref = useRef<T>(null);
@@ -66,14 +65,6 @@ export function ExperienceSection() {
             Open source and industry work where I shipped high-reliability backend systems,
             APIs, and cloud infrastructure.
           </p>
-          <Wireframe3D
-            shape="octahedron"
-            inner="cube"
-            rings={1}
-            nodes
-            speed={0.28}
-            className="mt-12 hidden w-44 opacity-80 md:block lg:w-52"
-          />
         </div>
 
         <div ref={timeline.ref} className={`${timeline.className} pt-1`}>

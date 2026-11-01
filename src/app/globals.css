@@ -913,17 +913,6 @@ button:focus-visible {
   opacity: 1;
 }
 
-/* Soft breathing glow behind the hero 3D shape */
-.hero-orb-glow {
-  background: radial-gradient(circle, hsl(var(--primary) / 0.28), transparent 70%);
-  filter: blur(40px);
-  animation: orb-breathe 6s ease-in-out infinite;
-}
-@keyframes orb-breathe {
-  0%, 100% { opacity: 0.55; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.06); }
-}
-
 /* Section titles ease in a touch more gracefully */
 .section-label .section-dash {
   transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
@@ -937,8 +926,5 @@ button:focus-visible {
     transform: none;
     filter: none;
     transition: none;
-  }
-  .hero-orb-glow {
-    animation: none;
   }
 }

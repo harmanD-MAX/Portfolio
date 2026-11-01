@@ -1,4 +1,5 @@
 export const SECTION_IDS = {
+  home: "home",
   about: "about",
   skills: "skills",
   experience: "experience",
@@ -132,6 +133,8 @@ export type ProjectEntry = {
   href: string;
   stack: string[];
   image?: string;
+  /** Show a "Book a demo" button that collects the visitor's email. */
+  demo?: boolean;
   award?: {
     label: string;
     links: { label: string; href: string }[];
@@ -173,6 +176,7 @@ export const projects: ProjectEntry[] = [
     description:
       "Sing a take over any song and Lyra corrects pitch and timing, then renders it in your own trained voice using diffusion-based voice conversion. Every render exports studio stems and a MIDI file. Includes a Voice Lab for recording and training your voice, a Google sign-in \"My Songs\" library, and a Lite mode that auto-adjusts for low-RAM/low-disk machines.",
     href: "https://github.com/harmanD-MAX/Lyra",
+    demo: true,
     image: "/assets/proj-lyra.png",
     stack: [
       "Python",

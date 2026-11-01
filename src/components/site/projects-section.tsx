@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ExternalLink, Sparkles } from "lucide-react";
 import { projects, SECTION_IDS } from "@/lib/site-data";
 
+import { DemoRequest } from "./demo-request";
+
 /** Image frame that tilts in 3D toward the pointer, with a moving light sheen. */
 function TiltFrame({ children, className }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -260,6 +262,13 @@ export function ProjectsSection() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Demo request (Lyra) */}
+                    {project.demo && (
+                      <div className="mt-1">
+                        <DemoRequest project={project.name} />
+                      </div>
+                    )}
 
                     {/* Awards Highlight (if present) */}
                     {project.award && (

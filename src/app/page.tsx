@@ -1,3 +1,4 @@
+import { AboutSection } from "@/components/site/about-section";
 import { ContactSection } from "@/components/site/contact-section";
 import { ExperienceSection } from "@/components/site/experience-section";
 import { HeroSection } from "@/components/site/hero-section";
@@ -18,6 +19,7 @@ export default function Home() {
       <div className="relative z-10 flex min-h-dvh flex-col">
         <main className="flex-1">
           <HeroSection />
+          <AboutSection />
           <ExperienceSection />
           <SkillsSection />
           <ProjectsSection />

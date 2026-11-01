@@ -14,7 +14,7 @@ export function ScrollDownIndicator() {
       className="group mt-16 flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       onClick={() => {
         document
-          .getElementById(SECTION_IDS.skills)
+          .getElementById(SECTION_IDS.about)
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
       }}
       aria-label="Scroll to Skills section"

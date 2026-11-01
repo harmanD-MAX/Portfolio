@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { profile, SECTION_IDS } from "@/lib/site-data";
 import { cn } from "@/lib/utils";
 
-import { Wireframe3D } from "./wireframe-3d";
 
 type FieldErrors = Partial<
   Record<"name" | "email" | "message", string>
@@ -81,7 +80,7 @@ export function ContactSection() {
     >
       <div className="w-full">
         <motion.div
-          className="relative mb-14 md:mb-16"
+          className="mb-14 md:mb-16"
           initial={reduce ? false : { opacity: 0, y: 20 }}
           whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
@@ -101,12 +100,6 @@ export function ContactSection() {
           <p className="mt-6 max-w-xl text-sm leading-7 text-[hsl(var(--foreground)/.56)] font-sans">
             Reach out for opportunities, collaborations, or discussing distributed systems and AI.
           </p>
-          <Wireframe3D
-            shape="torus"
-            rings={1}
-            speed={0.2}
-            className="absolute right-0 top-1/2 hidden w-56 -translate-y-1/2 opacity-70 md:block lg:w-72"
-          />
         </motion.div>
 
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
