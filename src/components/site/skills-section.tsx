@@ -152,7 +152,7 @@ export function SkillsSection() {
           <SectionLabel number="03">Skills & arsenal</SectionLabel>
           <h2
             id="skills-title"
-            className="serif mt-7 max-w-md text-5xl leading-[.95] tracking-[-.035em] md:text-7xl"
+            className="serif heading-3d mt-7 max-w-md text-5xl leading-[.95] tracking-[-.035em] md:text-7xl"
           >
             Tools are just <span className="italic text-[hsl(var(--primary))]">verbs.</span>
           </h2>

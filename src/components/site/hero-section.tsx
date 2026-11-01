@@ -7,6 +7,7 @@ import { ArrowDown, BookOpen } from "lucide-react";
 import { profile, SECTION_IDS } from "@/lib/site-data";
 
 import { ScrollDownIndicator } from "./scroll-down-indicator";
+import { Tilt3D } from "./tilt-3d";
 
 
 
@@ -41,15 +42,17 @@ export function HeroSection() {
           </div>
 
           {/* Main Name Heading in Serif */}
+          <Tilt3D glare={false} max={6} className="w-fit">
           <motion.h1
             id="hero-heading"
-            className="serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[-0.04em] leading-[0.92] text-foreground pb-1"
+            className="serif heading-3d text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-[-0.04em] leading-[0.92] text-foreground pb-1"
             initial={reduce ? false : { opacity: 0, y: 24 }}
             animate={reduce ? undefined : { opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
             Harmanpreet <span className="italic text-primary">Singh</span>
           </motion.h1>
+          </Tilt3D>
 
           {/* Role Subheading */}
           <motion.p
@@ -89,7 +92,7 @@ export function HeroSection() {
             <button
               type="button"
               onClick={() => scrollTo(SECTION_IDS.projects)}
-              className="mono text-xs uppercase tracking-wider px-7 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-all shadow-lg hover:shadow-primary/20 cursor-pointer inline-flex items-center gap-2 group"
+              className="mono text-xs uppercase tracking-wider px-7 py-3 rounded-full bg-primary text-primary-foreground font-semibold btn-3d cursor-pointer inline-flex items-center gap-2 group"
             >
               <span>View Projects</span>
               <ArrowDown size={13} className="transition-transform group-hover:translate-y-0.5" />
@@ -97,7 +100,7 @@ export function HeroSection() {
 
             <Link
               href="/blog"
-              className="mono text-xs uppercase tracking-wider px-7 py-3 rounded-full border border-border/80 bg-card/60 backdrop-blur-md text-foreground hover:border-primary hover:text-primary transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm group"
+              className="mono text-xs uppercase tracking-wider px-7 py-3 rounded-full border border-border/80 bg-card/60 backdrop-blur-md text-foreground hover:border-primary hover:text-primary btn-3d-ghost cursor-pointer inline-flex items-center gap-2 group"
             >
               <span>Read Articles</span>
               <BookOpen size={13} className="transition-transform group-hover:scale-110" />

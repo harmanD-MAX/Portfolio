@@ -117,7 +117,7 @@ export function ProjectsSection() {
           <SectionLabel number="04">Selected work</SectionLabel>
           <h2
             id="projects-heading"
-            className="serif mt-6 text-5xl leading-[.95] tracking-[-.035em] md:text-7xl"
+            className="serif heading-3d mt-6 text-5xl leading-[.95] tracking-[-.035em] md:text-7xl"
           >
             Built with <span className="italic text-[hsl(var(--primary))]">care.</span>
           </h2>

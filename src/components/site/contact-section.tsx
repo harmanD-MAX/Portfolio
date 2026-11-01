@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { profile, SECTION_IDS } from "@/lib/site-data";
 import { cn } from "@/lib/utils";
 
+import { Tilt3D } from "./tilt-3d";
+
 
 type FieldErrors = Partial<
   Record<"name" | "email" | "message", string>
@@ -93,7 +95,7 @@ export function ContactSection() {
           </div>
           <h2
             id="contact-heading"
-            className="serif mt-7 text-5xl leading-[.88] tracking-[-.04em] md:text-7xl"
+            className="serif heading-3d mt-7 text-5xl leading-[.88] tracking-[-.04em] md:text-7xl"
           >
             Have a knot to <span className="italic text-[hsl(var(--primary))]">untangle?</span>
           </h2>
@@ -110,12 +112,8 @@ export function ContactSection() {
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.5 }}
           >
-            <div
-              className={cn(
-                "rounded-2xl border border-white/[0.08] bg-card p-8",
-                "shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset,0_8px_32px_-12px_rgba(0,0,0,0.4)]",
-              )}
-            >
+            <Tilt3D max={4} className="surface-3d rounded-2xl">
+            <div className="p-8">
               <h3 className="font-heading text-lg font-semibold">
                 Let&apos;s connect
               </h3>
@@ -153,6 +151,7 @@ export function ContactSection() {
                 ))}
               </div>
             </div>
+            </Tilt3D>
           </motion.div>
 
           <motion.div
@@ -163,10 +162,7 @@ export function ContactSection() {
           >
             <form
               onSubmit={handleSubmit}
-              className={cn(
-                "rounded-2xl border border-white/[0.08] bg-card p-8",
-                "shadow-[0_0_0_1px_rgba(255,255,255,0.06)_inset,0_8px_32px_-12px_rgba(0,0,0,0.4)]",
-              )}
+              className="surface-3d rounded-2xl p-8"
               noValidate
             >
               <div className="grid gap-6">

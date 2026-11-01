@@ -56,7 +56,7 @@ export function ExperienceSection() {
           <SectionLabel number="02">Career</SectionLabel>
           <h2
             id="experience-heading"
-            className="serif mt-7 max-w-md text-5xl leading-[.95] tracking-[-.035em] md:text-7xl"
+            className="serif heading-3d mt-7 max-w-md text-5xl leading-[.95] tracking-[-.035em] md:text-7xl"
           >
             A trail of <span className="italic text-[hsl(var(--primary))]">useful</span>{" "}
             things.
