@@ -846,3 +846,99 @@ button:focus-visible {
     0 1px 4px rgba(0, 0, 0, 0.06),
     0 20px 40px -15px rgba(0, 0, 0, 0.22);
 }
+
+/* ── Motion polish ─────────────────────────────────────────── */
+
+/* Staggered children inside a .reveal container (experience bullets) */
+.stagger-item {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal.is-visible .stagger-item {
+  opacity: 1;
+  transform: none;
+}
+
+/* Project card entrance */
+.project-card .card-anim {
+  opacity: 0;
+  transform: translateY(22px) scale(0.985);
+  filter: blur(4px);
+  transition: opacity 0.75s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), filter 0.75s ease;
+}
+.project-card .card-anim-2 {
+  transition-delay: 0.12s;
+}
+.project-card .card-pill {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.project-card.is-in .card-anim,
+.project-card.is-in .card-pill {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.project-card.is-in .tilt-frame.card-anim {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: opacity 0.75s ease, filter 0.75s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
+}
+
+/* 3D tilt image frame */
+.tilt-frame {
+  transform-style: preserve-3d;
+  transition: opacity 0.75s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.75s ease,
+    box-shadow 0.4s ease;
+  will-change: transform;
+}
+.tilt-frame:hover {
+  box-shadow: 0 18px 40px -18px hsl(var(--primary) / 0.45);
+}
+.tilt-sheen {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    hsl(0 0% 100% / 0.14),
+    transparent 55%
+  );
+  transition: opacity 0.35s ease;
+}
+.tilt-frame:hover .tilt-sheen {
+  opacity: 1;
+}
+
+/* Soft breathing glow behind the hero 3D shape */
+.hero-orb-glow {
+  background: radial-gradient(circle, hsl(var(--primary) / 0.28), transparent 70%);
+  filter: blur(40px);
+  animation: orb-breathe 6s ease-in-out infinite;
+}
+@keyframes orb-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+/* Section titles ease in a touch more gracefully */
+.section-label .section-dash {
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-item,
+  .project-card .card-anim,
+  .project-card .card-pill {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+  .hero-orb-glow {
+    animation: none;
+  }
+}

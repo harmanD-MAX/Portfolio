@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/site/hero-section";
 import { HyperspeedBackground } from "@/components/site/hyperspeed-background";
 import { SiteNavbar } from "@/components/site/navbar";
 import { ProjectsSection } from "@/components/site/projects-section";
+import { ScrollProgress } from "@/components/site/scroll-progress";
 import { SkillsSection } from "@/components/site/skills-section";
 import { profile } from "@/lib/site-data";
 
@@ -11,6 +12,7 @@ export default function Home() {
   return (
     <>
       <HyperspeedBackground />
+      <ScrollProgress />
       {/* Navbar is sticky, sits outside the scroll container */}
       <SiteNavbar />
       <div className="relative z-10 flex min-h-dvh flex-col">

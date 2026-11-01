@@ -8,6 +8,7 @@ import { profile, SECTION_IDS } from "@/lib/site-data";
 
 import { HeroRotatingTagline } from "./hero-rotating-tagline";
 import { ScrollDownIndicator } from "./scroll-down-indicator";
+import { Wireframe3D } from "./wireframe-3d";
 
 
 
@@ -24,10 +25,30 @@ export function HeroSection() {
   return (
     <section
       id={SECTION_IDS.about}
-      className="page-wrap relative flex min-h-[calc(100dvh-4.5rem)] flex-col justify-center py-20 md:py-28"
+      className="page-wrap relative flex min-h-[calc(100dvh-4.5rem)] overflow-x-clip flex-col justify-center py-20 md:py-28"
       aria-labelledby="hero-heading"
     >
-      <div className="w-full">
+      {/* 3D vector centerpiece: nodes + edges, a nod to distributed systems */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute right-0 top-1/2 hidden w-[min(40vw,560px)] -translate-y-1/2 xl:block"
+        initial={reduce ? false : { opacity: 0, scale: 0.85, rotate: -8 }}
+        animate={reduce ? undefined : { opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ delay: 0.25, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="hero-orb-glow absolute inset-[18%] rounded-full" />
+        <Wireframe3D shape="icosahedron" inner="octahedron" rings={2} nodes className="relative w-full" />
+      </motion.div>
+      {/* Small, faint version behind the copy on phones and tablets */}
+      <Wireframe3D
+        shape="icosahedron"
+        rings={1}
+        nodes
+        parallax={0}
+        className="absolute -right-10 top-16 w-48 opacity-25 sm:w-64 xl:hidden"
+      />
+
+      <div className="relative w-full">
         <div className="max-w-3xl text-left">
           {/* Top Kicker Label */}
           <div className="mono text-xs tracking-widest text-primary uppercase mb-4">

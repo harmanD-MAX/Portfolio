@@ -43,6 +43,8 @@ import { TbApi, TbBrandAzure, TbNetwork, TbWaveSine } from "react-icons/tb";
 
 import { SECTION_IDS, skills } from "@/lib/site-data";
 
+import { Wireframe3D } from "./wireframe-3d";
+
 const skillIconMap: Record<string, React.ElementType> = {
   Java: FaJava,
   "C++": SiCplusplus,
@@ -158,6 +160,14 @@ export function SkillsSection() {
           <p className="mt-8 max-w-xs text-sm leading-7 text-[hsl(var(--foreground)/.56)]">
             A structured view of the tools, frameworks, and domains I work across.
           </p>
+          <Wireframe3D
+            shape="cube"
+            inner="octahedron"
+            rings={1}
+            nodes
+            speed={-0.24}
+            className="mt-12 hidden w-40 opacity-80 md:block lg:w-48"
+          />
         </div>
 
         <div ref={skillsReveal.ref} className={`${skillsReveal.className} pt-1`}>

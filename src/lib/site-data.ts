@@ -92,8 +92,6 @@ export type ExperienceEntry = {
   company: string;
   duration: string;
   bullets: string[];
-  /** Optional links rendered inline wherever their `text` appears in a bullet. */
-  links?: { text: string; href: string }[];
   certLink?: string;
   certText?: string;
 };
@@ -109,11 +107,6 @@ export const experiences: ExperienceEntry[] = [
       "Tracked down a Redis pipeline failure under LRU memory pressure that was silently aborting GC batches — root-caused to premature redis.Nil returns and shipped a regression test using miniredis (PR #281).",
       "Fixed container startup failures in non-default workspaces (PR #274).",
       "Refactored the E2E test structure to separate fixtures from examples across scheduling workflows (PR #795).",
-    ],
-    links: [
-      { text: "PR #281", href: "https://github.com/volcano-sh/agentcube/pull/281" },
-      { text: "PR #274", href: "https://github.com/volcano-sh/agentcube/pull/274" },
-      { text: "PR #795", href: "https://github.com/volcano-sh/kthena/pull/795" },
     ],
   },
   {
