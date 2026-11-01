@@ -32,7 +32,7 @@ export function HeroSection() {
         <div className="max-w-3xl text-left">
           {/* Top Kicker Label */}
           <div className="mono text-xs tracking-widest text-primary uppercase mb-4">
-            CS @ University of Alberta · Backend Systems · GenAI
+            CS @ UAlberta · Backend · Distributed Systems · Cloud
           </div>
 
           {/* Main Name Heading in Serif */}
@@ -69,11 +69,10 @@ export function HeroSection() {
             transition={{ delay: 0.22, duration: 0.6 }}
           >
             <p>
-              CS student focused on backend architecture, request routing, caching,
-              and how distributed systems communicate.
-            </p>
-            <p>
-              Deep in generative AI lately — how retrieval, embeddings, and prompt design fit into real production systems.
+              Final-year CS student building backend systems, APIs and cloud
+              infrastructure. I contribute to Volcano-sh, a CNCF Kubernetes
+              scheduler, and I&apos;m currently building Lyra, an AI vocal studio.
+              Looking for Summer 2027 software engineering internships.
             </p>
           </motion.div>
 

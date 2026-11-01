@@ -17,7 +17,7 @@ export const navLinks = [
 export const profile = {
   name: "Harmanpreet Singh",
   tag: "harman_",
-  title: "Backend Engineer · Distributed Systems · AI",
+  title: "Backend Engineer · Java · C++ · Go · Python",
   tagline: "Engineer by Nature ... Student by Time",
   university: "University of Alberta",
   degree: "BSc Computer Science",
@@ -32,91 +32,57 @@ export const profile = {
 export const skills = [
   {
     title: "Languages",
-    tagline:
-      "High-performance systems code, scripting, and typed application development.",
-    items: [
-      "Python",
-      "JavaScript",
-      "TypeScript",
-      "Java",
-      "C++",
-      "PostgreSQL",
-      "MySQL",
-      "Go",
-    ],
+    items: ["Java", "C++", "Go", "Python", "TypeScript", "JavaScript", "SQL"],
   },
   {
-    title: "Distributed Systems & Databases",
-    tagline:
-      "High-throughput data layers, asynchronous networking, and memory-cached architectures.",
+    title: "Systems & data",
     items: [
-      "Redis",
+      "Distributed systems",
+      "REST APIs",
       "PostgreSQL",
       "MySQL",
+      "Redis",
       "MongoDB",
-      "Astra DB",
-      "Asio",
-      "TCP/IP",
-      "SignalR",
     ],
   },
   {
     title: "Cloud & DevOps",
-    tagline:
-      "Containerization, cloud infrastructure, and CI/CD pipelines that ship reliably.",
     items: [
-      "Docker",
       "Kubernetes",
+      "Docker",
       "AWS",
       "Azure",
-      "Git",
+      "Firebase",
+      "Cloudflare",
+      "CI/CD",
       "GitHub Actions",
-      "Hangfire",
-      "Linux / Shell",
+      "Linux",
+      "Git",
     ],
   },
   {
-    title: "Frameworks & Libraries",
-    tagline: "Full-stack runtimes, backend services, and interactive frontends.",
+    title: "Frameworks & AI",
     items: [
+      "Spring Boot",
+      ".NET / ASP.NET Core",
+      "Node.js",
+      "Express",
       "React",
       "Next.js",
-      "Node.js",
-      "Django",
-      "Flask",
-      "FastAPI",
-      "Spring Boot",
-      ".NET",
-      "Express.js",
-      "Tailwind CSS",
-      "Redux",
-      "GraphQL",
-    ],
-  },
-  {
-    title: "AI & Systems",
-    tagline:
-      "Generative AI, graph analysis, heuristics, and algorithmic problem-solving.",
-    items: [
-      "Gemini AI",
+      "Android",
+      "Gemini",
       "Spring AI",
-      "Retrieval & Embeddings",
-
-      "Prompt Engineering",
+      "LLMs",
+      "Diffusion models",
     ],
   },
   {
-    title: "Engineering Practices",
-    tagline:
-      "Discipline, rigorous testing, observability, and robust architecture.",
+    title: "Engineering practice",
     items: [
-      "SDLC",
+      "Code reviews",
+      "Unit and E2E testing",
+      "Debugging",
       "Agile/Scrum",
-      "GenAI Productivity Tools",
-      "Object-Oriented Design (OOD)",
-      "Low Level System Design (LLD)",
-      "JUnit",
-      "Espresso",
     ],
   },
 ] as const;
@@ -126,6 +92,8 @@ export type ExperienceEntry = {
   company: string;
   duration: string;
   bullets: string[];
+  /** Optional links rendered inline wherever their `text` appears in a bullet. */
+  links?: { text: string; href: string }[];
   certLink?: string;
   certText?: string;
 };
@@ -136,10 +104,16 @@ export const experiences: ExperienceEntry[] = [
     company: "Volcano-sh (CNCF)",
     duration: "Jan 2026 — Present",
     bullets: [
+      "Contributing since early 2026 to learn how cloud-native infrastructure works at scale; multiple Go PRs merged.",
       "Contributing to Volcano-sh, a CNCF project for cloud-native batch scheduling and high-performance computing.",
       "Tracked down a Redis pipeline failure under LRU memory pressure that was silently aborting GC batches — root-caused to premature redis.Nil returns and shipped a regression test using miniredis (PR #281).",
       "Fixed container startup failures in non-default workspaces (PR #274).",
       "Refactored the E2E test structure to separate fixtures from examples across scheduling workflows (PR #795).",
+    ],
+    links: [
+      { text: "PR #281", href: "https://github.com/volcano-sh/agentcube/pull/281" },
+      { text: "PR #274", href: "https://github.com/volcano-sh/agentcube/pull/274" },
+      { text: "PR #795", href: "https://github.com/volcano-sh/kthena/pull/795" },
     ],
   },
   {
@@ -147,6 +121,7 @@ export const experiences: ExperienceEntry[] = [
     company: "La Connexional",
     duration: "Jan 2026 — Apr 2026",
     bullets: [
+      "Worked on the backend of UNTAPPED, a production platform used by 500+ people across Alberta.",
       "Worked across the full backend of a production web app — built and maintained API endpoints for authentication, password reset, profile management, payment tracking, and invoice workflows.",
       "Added backend event hooks, scheduled reminders, OAuth auth, and idempotent payment processing with tests covering key flows.",
       "Shipped end-to-end using Docker, Git, and CI/CD pipelines, supporting the final production release.",
@@ -197,6 +172,23 @@ export const projects: ProjectEntry[] = [
       "Google Maps API",
       "Three.js",
       "Tailwind CSS",
+    ],
+  },
+  {
+    name: "Lyra",
+    kicker: "AI Vocal Studio",
+    description:
+      "Sing a take over any song and Lyra corrects pitch and timing, then renders it in your own trained voice using diffusion-based voice conversion. Every render exports studio stems and a MIDI file. Includes a Voice Lab for recording and training your voice, a Google sign-in \"My Songs\" library, and a Lite mode that auto-adjusts for low-RAM/low-disk machines.",
+    href: "https://github.com/harmanD-MAX/Lyra",
+    image: "/assets/proj-lyra.jpg",
+    stack: [
+      "Python",
+      "Seed-VC (Diffusion)",
+      "RVC v2",
+      "Whisper",
+      "Firebase Auth",
+      "Cloudflare D1",
+      "Cloudflare R2",
     ],
   },
   {
@@ -264,8 +256,8 @@ export const projects: ProjectEntry[] = [
     ],
   },
   {
-    name: "CMPUT 301 Android App",
-    kicker: "Emotional Well-being Platform",
+    name: "Mood Tracker",
+    kicker: "Android Social App (University Team Project)",
     description:
       "An Android application designed to track and manage emotional well-being, featuring mood logging with locations, a time machine view, interactive maps, and a social feed—powered by Firebase for real-time sync.",
     href: "https://github.com/cmput301-w25/project-team_16",

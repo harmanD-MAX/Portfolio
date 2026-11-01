@@ -17,10 +17,25 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 });
 
+const SITE_TITLE = "Harmanpreet Singh | Backend & Distributed Systems";
+const SITE_DESCRIPTION =
+  "Harmanpreet Singh: CS student at the University of Alberta. Backend engineering, distributed systems, Kubernetes, cloud infrastructure and applied generative AI.";
+
 export const metadata: Metadata = {
   title: "Harman's Portfolio",
-  description:
-    "Portfolio of Harman — CS student at University of Alberta. Backend Engineering, Distributed Systems, and Generative AI.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    type: "website",
+    locale: "en_CA",
+    siteName: SITE_TITLE,
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
   icons: {
     icon: "/assets/favicon.svg",
   },
