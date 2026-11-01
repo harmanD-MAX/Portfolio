@@ -1,4 +1,5 @@
 export const SECTION_IDS = {
+  home: "home",
   about: "about",
   skills: "skills",
   experience: "experience",
@@ -92,8 +93,6 @@ export type ExperienceEntry = {
   company: string;
   duration: string;
   bullets: string[];
-  /** Optional links rendered inline wherever their `text` appears in a bullet. */
-  links?: { text: string; href: string }[];
   certLink?: string;
   certText?: string;
 };
@@ -109,11 +108,6 @@ export const experiences: ExperienceEntry[] = [
       "Tracked down a Redis pipeline failure under LRU memory pressure that was silently aborting GC batches — root-caused to premature redis.Nil returns and shipped a regression test using miniredis (PR #281).",
       "Fixed container startup failures in non-default workspaces (PR #274).",
       "Refactored the E2E test structure to separate fixtures from examples across scheduling workflows (PR #795).",
-    ],
-    links: [
-      { text: "PR #281", href: "https://github.com/volcano-sh/agentcube/pull/281" },
-      { text: "PR #274", href: "https://github.com/volcano-sh/agentcube/pull/274" },
-      { text: "PR #795", href: "https://github.com/volcano-sh/kthena/pull/795" },
     ],
   },
   {
@@ -139,6 +133,8 @@ export type ProjectEntry = {
   href: string;
   stack: string[];
   image?: string;
+  /** Show a "Book a demo" button that collects the visitor's email. */
+  demo?: boolean;
   award?: {
     label: string;
     links: { label: string; href: string }[];
@@ -180,6 +176,7 @@ export const projects: ProjectEntry[] = [
     description:
       "Sing a take over any song and Lyra corrects pitch and timing, then renders it in your own trained voice using diffusion-based voice conversion. Every render exports studio stems and a MIDI file. Includes a Voice Lab for recording and training your voice, a Google sign-in \"My Songs\" library, and a Lite mode that auto-adjusts for low-RAM/low-disk machines.",
     href: "https://github.com/harmanD-MAX/Lyra",
+    demo: true,
     image: "/assets/proj-lyra.png",
     stack: [
       "Python",

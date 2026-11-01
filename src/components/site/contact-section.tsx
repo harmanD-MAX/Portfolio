@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { profile, SECTION_IDS } from "@/lib/site-data";
 import { cn } from "@/lib/utils";
 
+
 type FieldErrors = Partial<
   Record<"name" | "email" | "message", string>
 >;

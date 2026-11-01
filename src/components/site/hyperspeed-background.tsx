@@ -20,7 +20,7 @@ type HyperspeedEffect = NonNullable<
 const presetOne = hyperspeedPresets.one as unknown as HyperspeedEffect;
 
 function computeHeroLit(): boolean {
-  const el = document.getElementById(SECTION_IDS.about);
+  const el = document.getElementById(SECTION_IDS.home);
   if (!el) return true;
   const rect = el.getBoundingClientRect();
   const center = rect.top + rect.height * 0.35;

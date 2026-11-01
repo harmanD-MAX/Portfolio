@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Github, Linkedin, Menu, X } from "lucide-react";
 
 function useActiveSection() {
-  const [activeSection, setActiveSection] = useState("about");
+  const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
     const sectionIds = ["about", "experience", "skills", "projects", "contact"];
@@ -24,7 +24,7 @@ function useActiveSection() {
 
       // Check section positions relative to viewport
       const threshold = windowHeight * 0.35;
-      let current = "about";
+      let current = "";
 
       for (const id of sectionIds) {
         const el = document.getElementById(id);

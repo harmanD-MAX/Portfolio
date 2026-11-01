@@ -43,6 +43,7 @@ import { TbApi, TbBrandAzure, TbNetwork, TbWaveSine } from "react-icons/tb";
 
 import { SECTION_IDS, skills } from "@/lib/site-data";
 
+
 const skillIconMap: Record<string, React.ElementType> = {
   Java: FaJava,
   "C++": SiCplusplus,

@@ -2,30 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { experiences, SECTION_IDS, type ExperienceEntry } from "@/lib/site-data";
+import { experiences, SECTION_IDS } from "@/lib/site-data";
 
-/** Turns any `links[].text` found in a bullet into an external link. */
-function renderBullet(bullet: string, links: ExperienceEntry["links"]) {
-  if (!links?.length) return bullet;
-  const escaped = links.map((l) => l.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-  const parts = bullet.split(new RegExp(`(${escaped.join("|")})`, "g"));
-  return parts.map((part, i) => {
-    const link = links.find((l) => l.text === part);
-    return link ? (
-      <a
-        key={i}
-        href={link.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary underline-offset-2 hover:underline"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    );
-  });
-}
 
 function useReveal<T extends HTMLElement = HTMLDivElement>() {
   const ref = useRef<T>(null);
@@ -109,16 +87,17 @@ export function ExperienceSection() {
               </div>
 
               <ul className="mt-5 max-w-lg space-y-3">
-                {exp.bullets.map((bullet) => (
+                {exp.bullets.map((bullet, bi) => (
                   <li
                     key={bullet.slice(0, 48)}
-                    className="flex gap-3 text-sm leading-7 text-[hsl(var(--foreground)/.75)]"
+                    style={{ transitionDelay: `${120 + i * 160 + bi * 70}ms` }}
+                    className="stagger-item flex gap-3 text-sm leading-7 text-[hsl(var(--foreground)/.75)]"
                   >
                     <span
                       className="mt-2.5 size-1 shrink-0 rounded-full bg-[var(--bullet)]"
                       aria-hidden
                     />
-                    <span>{renderBullet(bullet, exp.links)}</span>
+                    <span>{bullet}</span>
                   </li>
                 ))}
               </ul>

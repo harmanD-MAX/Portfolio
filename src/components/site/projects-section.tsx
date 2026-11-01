@@ -1,8 +1,38 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, ExternalLink, Sparkles, Award } from "lucide-react";
-import { projects, SECTION_IDS, ProjectEntry } from "@/lib/site-data";
+import { ArrowUpRight, ExternalLink, Sparkles } from "lucide-react";
+import { projects, SECTION_IDS } from "@/lib/site-data";
+
+import { DemoRequest } from "./demo-request";
+
+/** Image frame that tilts in 3D toward the pointer, with a moving light sheen. */
+function TiltFrame({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el || e.pointerType !== "mouse") return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    el.style.setProperty("--ry", `${(px - 0.5) * 10}deg`);
+    el.style.setProperty("--rx", `${(0.5 - py) * 8}deg`);
+    el.style.setProperty("--mx", `${px * 100}%`);
+    el.style.setProperty("--my", `${py * 100}%`);
+  };
+  const onLeave = () => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--ry", "0deg");
+    el.style.setProperty("--rx", "0deg");
+  };
+  return (
+    <div ref={ref} onPointerMove={onMove} onPointerLeave={onLeave} className={`tilt-frame ${className ?? ""}`}>
+      {children}
+      <span aria-hidden className="tilt-sheen" />
+    </div>
+  );
+}
 
 function SectionLabel({ number, children }: { number: string; children: string }) {
   return (
@@ -16,7 +46,25 @@ function SectionLabel({ number, children }: { number: string; children: string }
 
 export function ProjectsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [seen, setSeen] = useState<Set<number>>(() => new Set());
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
+
+  // Play each card's entrance once, when it first scrolls into view
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hits = entries
+          .filter((e) => e.isIntersecting)
+          .map((e) => cardRefs.current.indexOf(e.target as HTMLElement));
+        if (!hits.length) return;
+        setSeen((prev) => new Set([...prev, ...hits]));
+        entries.forEach((e) => e.isIntersecting && io.unobserve(e.target));
+      },
+      { threshold: 0.15 },
+    );
+    cardRefs.current.forEach((el) => el && io.observe(el));
+    return () => io.disconnect();
+  }, []);
 
   // Track active project as cards pin/stack at the top during scroll
   useEffect(() => {
@@ -148,7 +196,7 @@ export function ProjectsSection() {
                 style={{
                   zIndex: 10 + index,
                 }}
-                className={`relative md:sticky md:top-28 flex flex-col justify-between rounded-2xl border bg-[hsl(var(--card)/.98)] p-5 sm:p-6 md:p-7 backdrop-blur-2xl shadow-2xl transition-all duration-300 ${
+                className={`project-card ${seen.has(index) ? "is-in" : ""} relative md:sticky md:top-28 flex flex-col justify-between rounded-2xl border bg-[hsl(var(--card)/.98)] p-5 sm:p-6 md:p-7 backdrop-blur-2xl shadow-2xl transition-all duration-300 ${
                   isActive
                     ? "border-primary/55 ring-1 ring-primary/25 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                     : "border-border/60 hover:border-border"
@@ -175,7 +223,7 @@ export function ProjectsSection() {
                 {/* Neat Card Body: 2-Column Responsive Split */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6 items-start">
                   {/* Image Column */}
-                  <div className="md:col-span-5 relative aspect-[16/9] sm:aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-xl border border-foreground/10 bg-secondary/30 group">
+                  <TiltFrame className="card-anim md:col-span-5 relative aspect-[16/9] sm:aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-xl border border-foreground/10 bg-secondary/30 group">
                     {project.image ? (
                       <img
                         src={project.image}
@@ -187,10 +235,10 @@ export function ProjectsSection() {
                         Showcase
                       </div>
                     )}
-                  </div>
+                  </TiltFrame>
 
                   {/* Content Column */}
-                  <div className="md:col-span-7 flex flex-col justify-between gap-3">
+                  <div className="card-anim card-anim-2 md:col-span-7 flex flex-col justify-between gap-3">
                     <div>
                       <h3 className="serif text-2xl md:text-3xl font-normal text-foreground">
                         {project.name}
@@ -203,16 +251,24 @@ export function ProjectsSection() {
                     {/* Compact Stack Pills */}
                     <div>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {project.stack.map((tag) => (
+                        {project.stack.map((tag, ti) => (
                           <span
                             key={tag}
-                            className="mono text-[0.6rem] px-2 py-0.5 rounded-md border border-border/60 bg-secondary/30 text-foreground/85"
+                            style={{ transitionDelay: `${260 + ti * 45}ms` }}
+                            className="card-pill mono text-[0.6rem] px-2 py-0.5 rounded-md border border-border/60 bg-secondary/30 text-foreground/85"
                           >
                             {tag}
                           </span>
                         ))}
                       </div>
                     </div>
+
+                    {/* Demo request (Lyra) */}
+                    {project.demo && (
+                      <div className="mt-1">
+                        <DemoRequest project={project.name} />
+                      </div>
+                    )}
 
                     {/* Awards Highlight (if present) */}
                     {project.award && (
