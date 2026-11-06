@@ -94,6 +94,8 @@ export type ExperienceEntry = {
   duration: string;
   /** Path to the organization's logo in /public. */
   logo?: string;
+  /** Generic icon shown when there is no organization logo. */
+  logoIcon?: "internship";
   bullets: string[];
   certLink?: string;
   certText?: string;
@@ -127,7 +129,7 @@ export const experiences: ExperienceEntry[] = [
     role: "Software Engineering Intern",
     company: "La Connexional",
     duration: "Jan 2026 — Apr 2026",
-    logo: "/assets/logos/laconnexional.png",
+    logoIcon: "internship",
     bullets: [
       "Worked on the backend of UNTAPPED, a production platform used by 500+ people across Alberta.",
       "Worked across the full backend of a production web app — built and maintained API endpoints for authentication, password reset, profile management, payment tracking, and invoice workflows.",

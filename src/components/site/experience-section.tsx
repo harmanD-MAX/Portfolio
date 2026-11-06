@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, BriefcaseBusiness } from "lucide-react";
 import { experiences, SECTION_IDS } from "@/lib/site-data";
 
 
@@ -76,6 +76,15 @@ export function ExperienceSection() {
               <div className="timeline-dot" />
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                 <div className="flex items-center gap-4">
+                  {!exp.logo && exp.logoIcon === "internship" && (
+                    <span
+                      className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-[hsl(var(--primary)/.35)] bg-[hsl(var(--primary)/.12)] text-[hsl(var(--primary))] shadow-sm"
+                      aria-label="Internship"
+                      role="img"
+                    >
+                      <BriefcaseBusiness size={22} strokeWidth={1.75} />
+                    </span>
+                  )}
                   {exp.logo && (
                     <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[hsl(var(--border)/.7)] bg-white p-1 shadow-sm">
                       <img

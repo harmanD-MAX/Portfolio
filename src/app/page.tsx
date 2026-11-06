@@ -7,6 +7,7 @@ import { SiteNavbar } from "@/components/site/navbar";
 import { ProjectsSection } from "@/components/site/projects-section";
 import { ScrollProgress } from "@/components/site/scroll-progress";
 import { SkillsSection } from "@/components/site/skills-section";
+import { VisitorCounter } from "@/components/site/visitor-counter";
 import { profile } from "@/lib/site-data";
 
 export default function Home() {
@@ -34,9 +35,12 @@ export default function Home() {
           <p className="serif italic text-sm text-foreground/75 text-center">
             &ldquo;{profile.hindiQuote}&rdquo;
           </p>
-          <span className="mono text-[0.68rem] text-muted-foreground/80 md:text-right">
-            {profile.tag} · © {new Date().getFullYear()}
-          </span>
+          <div className="flex flex-col gap-1 md:items-end">
+            <VisitorCounter />
+            <span className="mono text-[0.68rem] text-muted-foreground/80 md:text-right">
+              {profile.tag} · © {new Date().getFullYear()}
+            </span>
+          </div>
         </footer>
       </div>
     </>
