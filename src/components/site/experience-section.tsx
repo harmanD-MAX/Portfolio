@@ -75,11 +75,29 @@ export function ExperienceSection() {
             >
               <div className="timeline-dot" />
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                <div>
-                  <h3 className="text-lg font-semibold">{exp.role}</h3>
-                  <p className="mt-1 text-sm text-[hsl(var(--foreground)/.57)]">
-                    {exp.company}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <span className="logo-tile flex size-12 shrink-0 items-center justify-center rounded-xl">
+                    {exp.logo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={exp.logo}
+                        alt={`${exp.company} logo`}
+                        width={28}
+                        height={28}
+                        className="size-7 object-contain"
+                      />
+                    ) : (
+                      <span className="serif text-lg italic text-primary" aria-hidden>
+                        {exp.monogram}
+                      </span>
+                    )}
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-semibold">{exp.role}</h3>
+                    <p className="mt-1 text-sm text-[hsl(var(--foreground)/.57)]">
+                      {exp.company}
+                    </p>
+                  </div>
                 </div>
                 <span className="mono text-[hsl(var(--foreground)/.48)]">
                   {exp.duration}
