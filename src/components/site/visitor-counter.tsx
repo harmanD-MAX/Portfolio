@@ -21,23 +21,36 @@ function storeId(id: string) {
   }
 }
 
+type VisitorResponse = { count?: number | null; visitorId?: string } | null;
+
+// One registration per page load, shared by every mount (StrictMode, remounts).
+let registration: Promise<VisitorResponse> | null = null;
+
+function registerVisit(): Promise<VisitorResponse> {
+  registration ??= fetch("/api/visitors", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    cache: "no-store",
+    body: JSON.stringify({ visitorId: readStoredId() }),
+  })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data: VisitorResponse) => {
+      if (data && typeof data.visitorId === "string") storeId(data.visitorId);
+      return data;
+    })
+    .catch(() => null);
+  return registration;
+}
+
 export function VisitorCounter() {
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/visitors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ visitorId: readStoredId() }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled || !data) return;
-        if (typeof data.visitorId === "string") storeId(data.visitorId);
-        if (typeof data.count === "number") setCount(data.count);
-      })
-      .catch(() => {});
+    registerVisit().then((data) => {
+      if (!cancelled && data && typeof data.count === "number") setCount(data.count);
+    });
     return () => {
       cancelled = true;
     };
