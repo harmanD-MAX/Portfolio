@@ -92,6 +92,8 @@ export type ExperienceEntry = {
   role: string;
   company: string;
   duration: string;
+  /** Path to the organization's logo in /public. */
+  logo?: string;
   bullets: string[];
   certLink?: string;
   certText?: string;
@@ -100,8 +102,19 @@ export type ExperienceEntry = {
 export const experiences: ExperienceEntry[] = [
   {
     role: "Open-Source Contributor",
+    company: "Meshery (CNCF)",
+    duration: "Jul 2026 — Present",
+    logo: "/assets/logos/meshery.svg",
+    bullets: [
+      "Currently contributing to Meshery, the CNCF cloud-native manager for designing, deploying, and operating Kubernetes infrastructure.",
+      "Working in the Go server codebase — fixed a nil error being passed to ErrBlankName in the load test handler so blank-name failures surface a real error.",
+    ],
+  },
+  {
+    role: "Open-Source Contributor",
     company: "Volcano-sh (CNCF)",
     duration: "Jan 2026 — Present",
+    logo: "/assets/logos/volcano.svg",
     bullets: [
       "Contributing since early 2026 to learn how cloud-native infrastructure works at scale; multiple Go PRs merged.",
       "Contributing to Volcano-sh, a CNCF project for cloud-native batch scheduling and high-performance computing.",
@@ -114,6 +127,7 @@ export const experiences: ExperienceEntry[] = [
     role: "Software Engineering Intern",
     company: "La Connexional",
     duration: "Jan 2026 — Apr 2026",
+    logo: "/assets/logos/laconnexional.png",
     bullets: [
       "Worked on the backend of UNTAPPED, a production platform used by 500+ people across Alberta.",
       "Worked across the full backend of a production web app — built and maintained API endpoints for authentication, password reset, profile management, payment tracking, and invoice workflows.",
