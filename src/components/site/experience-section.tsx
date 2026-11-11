@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, BriefcaseBusiness } from "lucide-react";
 import { experiences, SECTION_IDS } from "@/lib/site-data";
+import { MergedPrTable } from "./merged-pr-table";
 
 
 function useReveal<T extends HTMLElement = HTMLDivElement>() {
@@ -124,6 +125,10 @@ export function ExperienceSection() {
                   </li>
                 ))}
               </ul>
+
+              {exp.mergedPrs && (
+                <MergedPrTable source={exp.mergedPrs.source} label={exp.mergedPrs.label} />
+              )}
 
               {exp.certLink && (
                 <a

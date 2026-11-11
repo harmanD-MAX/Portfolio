@@ -96,6 +96,8 @@ export type ExperienceEntry = {
   logo?: string;
   /** Generic icon shown when there is no organization logo. */
   logoIcon?: "internship";
+  /** Show a live table of merged PRs from this allowlisted GitHub source. */
+  mergedPrs?: { source: "meshery"; label: string };
   bullets: string[];
   certLink?: string;
   certText?: string;
@@ -107,6 +109,7 @@ export const experiences: ExperienceEntry[] = [
     company: "Meshery (CNCF)",
     duration: "Jul 2026 — Present",
     logo: "/assets/logos/meshery.svg",
+    mergedPrs: { source: "meshery", label: "Meshery" },
     bullets: [
       "Currently contributing to Meshery, the CNCF cloud-native manager for designing, deploying, and operating Kubernetes infrastructure.",
       "Working in the Go server codebase — fixed a nil error being passed to ErrBlankName in the load test handler so blank-name failures surface a real error.",
