@@ -284,3 +284,58 @@ export const projects: ProjectEntry[] = [
 
 export const moreProjectsUrl =
   "https://github.com/harmanD-MAX?tab=repositories";
+
+export type ExpertiseLayer = {
+  id: string;
+  title: string;
+  summary: string;
+  stack: string[];
+  /** Where this layer was used for real. */
+  provenIn: string[];
+};
+
+/** Hero "systems stack": top = closest to users, bottom = closest to the metal. */
+export const expertiseLayers: ExpertiseLayer[] = [
+  {
+    id: "ai",
+    title: "AI products",
+    summary: "LLM features and diffusion voice models in shipped apps.",
+    stack: ["LLMs", "Spring AI", "Gemini", "Seed-VC", "Whisper"],
+    provenIn: ["Lyra", "TripWise", "Blueprint"],
+  },
+  {
+    id: "mobile",
+    title: "Android & clients",
+    summary: "Native Android apps and React/Next.js frontends with real-time sync.",
+    stack: ["Android", "Java", "Firebase", "React", "Next.js"],
+    provenIn: ["Mood Tracker", "Echo", "GeoScope"],
+  },
+  {
+    id: "backend",
+    title: "Backend & APIs",
+    summary: "Auth, payments, scheduled jobs and REST APIs in production.",
+    stack: ["Spring Boot", ".NET", "Node.js", "REST", "OAuth"],
+    provenIn: ["La Connexional", "TripWise", "Blueprint"],
+  },
+  {
+    id: "distributed",
+    title: "Distributed systems",
+    summary: "Batch scheduling, matchmaking, caching and data consistency.",
+    stack: ["Go", "Redis", "PostgreSQL", "Queues", "Consistency"],
+    provenIn: ["Volcano", "ArenaNet"],
+  },
+  {
+    id: "infra",
+    title: "Cloud infrastructure",
+    summary: "Kubernetes-native tooling, containers and CI/CD pipelines.",
+    stack: ["Kubernetes", "Docker", "AWS", "Azure", "GitHub Actions"],
+    provenIn: ["Meshery", "Volcano", "La Connexional"],
+  },
+  {
+    id: "lowlevel",
+    title: "Low-level & networking",
+    summary: "Async TCP servers, custom wire protocols and memory-aware C++.",
+    stack: ["C++20", "Asio", "TCP/IP", "Linux", "Concurrency"],
+    provenIn: ["ArenaNet"],
+  },
+];
