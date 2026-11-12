@@ -6,7 +6,6 @@ import { ArrowDown, BookOpen } from "lucide-react";
 
 import { profile, SECTION_IDS } from "@/lib/site-data";
 
-import { HeroStack } from "./hero-stack";
 
 
 
@@ -15,6 +14,9 @@ const FOCUS_AREAS = [
   "Cloud Infrastructure",
   "System Design",
   "Generative AI",
+  "LLMs",
+  "Android",
+  "Low-Level Systems",
 ] as const;
 
 function scrollTo(id: string) {
@@ -105,7 +107,6 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        <HeroStack />
       </div>
     </section>
   );
