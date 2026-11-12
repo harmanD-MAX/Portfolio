@@ -7,7 +7,6 @@ import { ArrowDown, BookOpen } from "lucide-react";
 import { profile, SECTION_IDS } from "@/lib/site-data";
 
 import { HeroStack } from "./hero-stack";
-import { ScrollDownIndicator } from "./scroll-down-indicator";
 
 
 
@@ -34,7 +33,7 @@ export function HeroSection() {
       className="page-wrap relative flex min-h-[calc(100dvh-4.5rem)] overflow-x-clip flex-col justify-center py-20 md:py-28"
       aria-labelledby="hero-heading"
     >
-      <div className="relative grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-10">
+      <div className="relative w-full min-w-0">
         <div className="min-w-0 max-w-3xl text-left">
           {/* Top Kicker Label */}
           <div className="mono text-xs tracking-widest text-primary uppercase mb-4">
@@ -106,11 +105,8 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        <div className="flex min-w-0 justify-start lg:justify-end">
-          <HeroStack />
-        </div>
+        <HeroStack />
       </div>
-      <ScrollDownIndicator />
     </section>
   );
 }

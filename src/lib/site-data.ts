@@ -107,7 +107,7 @@ export const experiences: ExperienceEntry[] = [
   {
     role: "Open-Source Contributor",
     company: "Meshery (CNCF)",
-    duration: "Jul 2026 — Present",
+    duration: "Oct 2026 — Present",
     logo: "/assets/logos/meshery.svg",
     mergedPrs: { source: "meshery", label: "Meshery" },
     bullets: [
@@ -298,44 +298,82 @@ export type ExpertiseLayer = {
 export const expertiseLayers: ExpertiseLayer[] = [
   {
     id: "ai",
-    title: "AI products",
-    summary: "LLM features and diffusion voice models in shipped apps.",
-    stack: ["LLMs", "Spring AI", "Gemini", "Seed-VC", "Whisper"],
+    title: "AI / ML products",
+    summary:
+      "LLM features, RAG-style repo analysis and diffusion-based voice conversion in shipped apps.",
+    stack: ["LLMs", "Spring AI", "Gemini", "Seed-VC", "RVC", "Whisper"],
     provenIn: ["Lyra", "TripWise", "Blueprint"],
+  },
+  {
+    id: "geo",
+    title: "Maps & geospatial",
+    summary:
+      "Location scoring, 3D map visualisation and live traffic trends on Google Maps Platform.",
+    stack: ["Google Maps Platform", "Places", "Routes", "Three.js", "OSRM"],
+    provenIn: ["GeoScope (GMP Hackathon winner)", "TripWise"],
   },
   {
     id: "mobile",
     title: "Android & clients",
-    summary: "Native Android apps and React/Next.js frontends with real-time sync.",
-    stack: ["Android", "Java", "Firebase", "React", "Next.js"],
+    summary:
+      "Native Android with real-time sync and maps, plus React and Next.js web clients.",
+    stack: ["Android", "Java", "Firebase", "React", "Next.js", "TypeScript"],
     provenIn: ["Mood Tracker", "Echo", "GeoScope"],
   },
   {
     id: "backend",
     title: "Backend & APIs",
-    summary: "Auth, payments, scheduled jobs and REST APIs in production.",
-    stack: ["Spring Boot", ".NET", "Node.js", "REST", "OAuth"],
+    summary:
+      "Auth, OAuth, payments with idempotency, scheduled jobs and REST APIs in production.",
+    stack: ["Java", "Spring Boot", ".NET", "Node.js", "REST", "OAuth"],
     provenIn: ["La Connexional", "TripWise", "Blueprint"],
+  },
+  {
+    id: "data",
+    title: "Data & storage",
+    summary:
+      "Relational modelling, rankings with window functions, caching and object storage.",
+    stack: ["PostgreSQL", "MySQL", "Redis", "Firestore", "Cloudflare D1/R2"],
+    provenIn: ["ArenaNet", "Lyra", "Echo"],
   },
   {
     id: "distributed",
     title: "Distributed systems",
-    summary: "Batch scheduling, matchmaking, caching and data consistency.",
-    stack: ["Go", "Redis", "PostgreSQL", "Queues", "Consistency"],
-    provenIn: ["Volcano", "ArenaNet"],
+    summary:
+      "Batch scheduling on Kubernetes, matchmaking, session state and consistency under load.",
+    stack: ["Go", "Scheduling", "Redis", "Queues", "Consistency"],
+    provenIn: ["Volcano (CNCF)", "ArenaNet"],
+  },
+  {
+    id: "algorithms",
+    title: "Algorithms & optimisation",
+    summary:
+      "Route optimisation (TSP), ELO ranking and weighted multi-factor scoring models.",
+    stack: ["Graphs", "TSP heuristics", "Ranking", "Scoring", "Complexity"],
+    provenIn: ["TripWise", "ArenaNet", "GeoScope"],
+  },
+  {
+    id: "reliability",
+    title: "Reliability & testing",
+    summary:
+      "Root-causing production failures, regression tests and unit/E2E suites in CI.",
+    stack: ["Debugging", "Regression tests", "miniredis", "E2E", "CI/CD"],
+    provenIn: ["Volcano (CNCF)", "La Connexional"],
   },
   {
     id: "infra",
     title: "Cloud infrastructure",
-    summary: "Kubernetes-native tooling, containers and CI/CD pipelines.",
-    stack: ["Kubernetes", "Docker", "AWS", "Azure", "GitHub Actions"],
-    provenIn: ["Meshery", "Volcano", "La Connexional"],
+    summary:
+      "Kubernetes-native tooling, containers and CI/CD on AWS, Azure and Cloudflare.",
+    stack: ["Kubernetes", "Docker", "AWS", "Azure", "GitHub Actions", "Linux"],
+    provenIn: ["Meshery (CNCF)", "Volcano (CNCF)", "La Connexional"],
   },
   {
     id: "lowlevel",
     title: "Low-level & networking",
-    summary: "Async TCP servers, custom wire protocols and memory-aware C++.",
-    stack: ["C++20", "Asio", "TCP/IP", "Linux", "Concurrency"],
+    summary:
+      "Async TCP servers, a custom binary wire protocol and memory-aware modern C++.",
+    stack: ["C++20", "Asio", "TCP/IP", "Concurrency", "Linux"],
     provenIn: ["ArenaNet"],
   },
 ];
