@@ -59,14 +59,79 @@ function saveBackupBlogs(blogs: BlogEntity[]) {
   }
 }
 
+/** Articles that were removed from the site; deleted from the database on startup. */
+const RETIRED_SLUGS = [
+  "pattern-recognition-leetcode-dp-distributed-systems",
+  "zero-copy-networking-tcp-game-servers-cpp-asio",
+  "high-throughput-request-routing-idempotency-redis",
+  "vector-search-hnsw-indexing-production-rag",
+  "building-low-latency-multiplayer-backends-cpp-asio",
+];
+
+/**
+ * Keeps the database in step with the articles shipped in blogs.json:
+ * removes retired articles and upserts the current ones (views/likes kept).
+ */
+async function syncManagedArticles() {
+  const pool = getPostgresPool();
+  if (!pool) return;
+
+  let seeds: BlogEntity[] = [];
+  try {
+    seeds = JSON.parse(fs.readFileSync(SEED_FILE, "utf-8"));
+  } catch (err) {
+    console.warn("Failed to read seed articles:", err);
+    return;
+  }
+
+  await pool.query("DELETE FROM blogs WHERE slug = ANY($1::text[])", [RETIRED_SLUGS]);
+
+  for (const blog of seeds) {
+    const createdAt = new Date(blog.publishedAt);
+    await pool.query(
+      `INSERT INTO blogs (
+        id, slug, title, excerpt, content, category, tags, read_time, published_at,
+        is_draft, author_name, author_role, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      ON CONFLICT (slug) DO UPDATE SET
+        title = EXCLUDED.title,
+        excerpt = EXCLUDED.excerpt,
+        content = EXCLUDED.content,
+        category = EXCLUDED.category,
+        tags = EXCLUDED.tags,
+        read_time = EXCLUDED.read_time,
+        published_at = EXCLUDED.published_at,
+        is_draft = EXCLUDED.is_draft,
+        created_at = EXCLUDED.created_at`,
+      [
+        blog.id,
+        blog.slug,
+        blog.title,
+        blog.excerpt,
+        blog.content,
+        blog.category,
+        JSON.stringify(blog.tags || []),
+        blog.readTime,
+        blog.publishedAt,
+        Boolean(blog.isDraft),
+        "Harman",
+        blog.author?.role || "Backend & Distributed Systems Engineer",
+        Number.isNaN(createdAt.getTime()) ? new Date() : createdAt,
+      ],
+    );
+  }
+}
+
 let schemaInitialized = false;
 async function ensureSchema() {
   if (!schemaInitialized) {
     try {
-      await initPostgresSchema();
+      if (await initPostgresSchema()) {
+        await syncManagedArticles();
+      }
       schemaInitialized = true;
-    } catch {
-      // PostgreSQL unreachable, fallback active
+    } catch (err) {
+      console.warn("Blog schema/sync error, fallback active:", err);
     }
   }
 }

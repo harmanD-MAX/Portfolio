@@ -13,6 +13,7 @@ const CATEGORIES = [
   "Distributed Systems",
   "Backend Architecture",
   "System Design",
+  "Cloud Infrastructure",
   "Generative AI",
 ];
 
@@ -69,7 +70,7 @@ export function BlogListingClient({ initialBlogs = [] }: { initialBlogs: BlogEnt
               Technical <span className="italic text-primary">writings.</span>
             </h1>
             <p className="mt-4 max-w-xl text-sm md:text-base leading-relaxed text-foreground/75 font-sans">
-              Deep dives on algorithmic pattern recognition, distributed systems architectures, real-time networking, and generative AI.
+              Deep dives on cloud infrastructure, Kubernetes scheduling, service meshes and serving AI at scale.
             </p>
           </div>
 

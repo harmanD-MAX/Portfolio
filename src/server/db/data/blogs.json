@@ -1,101 +1,76 @@
 [
   {
-    "id": "leetcode-patterns-dp-distributed",
-    "slug": "pattern-recognition-leetcode-dp-distributed-systems",
-    "title": "Pattern Recognition in LeetCode: From Dynamic Programming to Distributed Systems",
-    "excerpt": "A deep dive into decomposing algorithmic problems using recurring templates—and why subproblem memoization is the exact same mental model behind distributed caching and idempotent request routing.",
-    "category": "Algorithms",
-    "tags": [
-      "LeetCode",
-      "Dynamic Programming",
-      "System Design",
-      "Caching",
-      "C++"
-    ],
-    "readTime": "8 min read",
-    "publishedAt": "Sep 04, 2026",
-    "isDraft": false,
-    "author": {
-      "name": "Harman",
-      "signature": "Harmanpreet Singh",
-      "role": "Backend & Distributed Systems Engineer"
-    },
-    "content": "## The Core Shift: Stop Solving Problems, Start Classifying State Transitions\n\nWhen solving algorithmic challenges—whether preparing for technical interviews or architecting high-throughput distributed microservices—the biggest leap in engineering intuition occurs when you stop treating every problem as a unique riddle.\n\nInstead, **90% of complex algorithmic challenges map directly to fewer than 7 fundamental templates**.\n\n```text\n[ Problem Space ]\n        │\n        ├── Sequential Decision? ──────► Dynamic Programming (State DAG)\n        ├── Window / Subarray Range? ──► Sliding Window / Two Pointers\n        ├── Shortest Path / Level? ────► BFS / Dijkstra / Topological Sort\n        ├── Connectivity / Cycles? ────► Union-Find (Disjoint Set Union)\n        └── Partition / Monotonic? ────► Monotonic Stack / Binary Search\n```\n\n---\n\n## 1. Dynamic Programming as State Space Graphs\n\nConsider the classic **0/1 Knapsack** vs **Unbounded Knapsack** vs **Interval Scheduling**. Many developers memorize tables. But in reality, every DP problem is simply finding the shortest/longest path in a **Directed Acyclic Graph (DAG)** of states:\n\n### The Universal DP Recurrence Form:\n```text\nState: DP[i][w] = Maximum value achievable considering items up to index i with capacity w\nBase Case: DP[0][w] = 0 for all w\nTransition: DP[i][w] = max(DP[i-1][w], DP[i-1][w - weight[i]] + value[i])\n```\n\nHere is how you express this cleanly in modern C++20 with cache locality optimizations:\n\n```cpp\n#include <vector>\n#include <algorithm>\n#include <iostream>\n\n// Space-optimized 1D Rolling Array Pattern\nint solveKnapsack(int capacity, const std::vector<int>& weights, const std::vector<int>& values) {\n    std::vector<int> dp(capacity + 1, 0);\n\n    for (size_t i = 0; i < weights.size(); ++i) {\n        // Traverse backwards to prevent using the same item multiple times in 0/1\n        for (int w = capacity; w >= weights[i]; --w) {\n            dp[w] = std::max(dp[w], dp[w - weights[i]] + values[i]);\n        }\n    }\n    return dp[capacity];\n}\n```\n\n---\n\n## 2. Why This Matters in Distributed Systems\n\nThink about how a **Distributed Cache (e.g. Redis Cluster)** or an **API Gateway with Idempotency Keys** works:\n\n> [!NOTE]\n> **Memoization in Code** $\\equiv$ **Distributed Caching in Production**\n> - In DP: We cache intermediate subproblem results to avoid redundant $O(2^N)$ subtree recomputations.\n> - In Distributed Systems: We cache query results (with TTL & LRU eviction) to protect underlying databases from $O(QPS)$ cascading thundering herds.\n\n### The Parallel Architecture:\n1. **Overlapping Subproblems**: In an e-commerce checkout service, multiple concurrent requests calculate the same shipping rate matrix $\\rightarrow$ solved via Redis memoization.\n2. **Optimal Substructure**: The optimal global latency of a federated RPC pipeline is composed of the optimal latencies of its DAG dependencies $\\rightarrow$ solved via async pipeline fan-out.\n\n---\n\n## 3. The 5-Step Pattern Recognition Framework\n\nWhenever you encounter a new problem:\n\n1. **Identify the Constraints**: Look at $N$. If $N \\le 20$, think Bitmask/Backtracking. If $N \\le 10^5$, think $O(N \\log N)$ Sorting/Binary Search. If $N \\le 10^7$, think $O(N)$ Hash Map/Sliding Window.\n2. **Define State Variables**: What is the minimum set of parameters needed to uniquely represent a snapshot of progress?\n3. **Formulate the Boundary**: What happens at index 0, negative capacities, or empty trees?\n4. **Determine the Direction of Computation**: Bottom-up (iterative with rolling variables) vs Top-Down (memoized recursion).\n5. **Optimize Space Complexity**: Can a $2\\text{D}$ table $O(N \\times M)$ be compressed to $O(M)$ using two rolling rows or a single backward array?\n\nMastering this mental model turns algorithmic problem solving from stressful memorization into systematic engineering decomposition.",
-    "views": 0,
-    "likes": 0
-  },
-  {
-    "id": "zero-copy-networking-cpp-asio",
-    "slug": "zero-copy-networking-tcp-game-servers-cpp-asio",
-    "title": "Zero-Copy Networking: Designing 100K+ QPS TCP Game Servers with C++20 and Asio",
-    "excerpt": "Architectural insights into sub-5ms latency event loops, circular ring buffers, binary packet framing, and zero-allocation memory arenas in modern C++20.",
-    "category": "Distributed Systems",
-    "tags": [
-      "C++20",
-      "Asio",
-      "TCP/IP",
-      "Networking",
-      "Low Latency"
-    ],
-    "readTime": "7 min read",
-    "publishedAt": "Aug 29, 2026",
-    "isDraft": false,
-    "author": {
-      "name": "Harman",
-      "signature": "Harmanpreet Singh",
-      "role": "Backend & Distributed Systems Engineer"
-    },
-    "content": "## Real-Time Backend Latency: Why the Thread-Per-Client Model Fails\n\nWhen serving real-time multiplayer worlds or financial order-matching engines with $60\\text{ Hz}$ tick rates ($16.6\\text{ms}$ total window per frame), standard blocking I/O models collapse due to CPU kernel context switches and heap allocator lock contention.\n\nTo handle $100\\text{K}+$ concurrent TCP connections, high-performance backends adopt the **Single-Threaded Event Loop with Non-Blocking epoll / kqueue** and **C++20 Coroutines**.\n\n```text\n   [ TCP Ingress Stream ] ──► [ Circular Ring Buffer ]\n                                    │\n                              (Zero Copy Cast)\n                                    ▼\n                             [ Packet Dispatch ] ──► [ Tick Arena Pool ]\n```\n\n---\n\n## 1. C++20 Asynchronous Coroutines with Asio\n\nUsing `asio::awaitable<void>` allows developers to write clean, linear logic while executing completely asynchronously:\n\n```cpp\n#include <asio.hpp>\n#include <iostream>\n#include <memory>\n\nasio::awaitable<void> handleSession(asio::ip::tcp::socket socket) {\n    std::array<uint8_t, 1024> buffer{};\n    \n    for (;;) {\n        // Asynchronously read 4-byte packet header without blocking\n        std::size_t n = co_await asio::async_read(\n            socket,\n            asio::buffer(buffer.data(), 4),\n            asio::use_awaitable\n        );\n\n        uint16_t packetId = *reinterpret_cast<const uint16_t*>(&buffer[0]);\n        uint16_t payloadSize = *reinterpret_cast<const uint16_t*>(&buffer[2]);\n\n        // Zero-copy async payload read\n        co_await asio::async_read(\n            socket,\n            asio::buffer(buffer.data() + 4, payloadSize),\n            asio::use_awaitable\n        );\n\n        // Process message in local arena\n    }\n}\n```\n\n---\n\n## 2. Pre-Allocated Ring Buffers & Zero Allocations\n\nHeap allocations (`new` / `malloc`) acquire global lock mutexes in multi-threaded runtimes. By pre-allocating contiguous memory arenas per connection:\n\n> [!NOTE]\n> **Sub-5ms Tick Turnaround Guarantee**:\n> Ingestion buffers write into a contiguous circular ring buffer. Packet headers point to memory offsets directly within the buffer without deserializing or re-allocating new objects.",
-    "views": 0,
-    "likes": 0
-  },
-  {
-    "id": "high-throughput-request-routing-redis",
-    "slug": "high-throughput-request-routing-idempotency-redis",
-    "title": "High-Throughput Request Routing & Idempotency Key Architecture with Redis Cluster",
-    "excerpt": "How to design at-least-once distributed request pipelines without duplicate mutations using atomic Redis Lua scripts, distributed locks, and sliding-window rate limiters.",
-    "category": "Backend Architecture",
-    "tags": [
-      "Redis",
-      "System Design",
-      "Idempotency",
-      "Distributed Systems",
-      "Backend Architecture"
-    ],
-    "readTime": "8 min read",
-    "publishedAt": "Aug 24, 2026",
-    "isDraft": false,
-    "author": {
-      "name": "Harman",
-      "signature": "Harmanpreet Singh",
-      "role": "Backend & Distributed Systems Engineer"
-    },
-    "content": "## The Core Challenge: Retries & Duplicate Executions\n\nIn distributed architectures, network timeouts are inevitable. When a client sends a payment checkout or inventory reservation and experiences a TCP reset before receiving the response:\n- Did the request fail before reaching the database?\n- Or did the mutation succeed, but the response was dropped on the wire?\n\nWithout **Idempotency Keys**, naive client retries result in duplicate charges or duplicate inventory reservations.\n\n```text\n   [ Client ] ──(Request + Idempotency-Key)──► [ API Gateway ]\n                                                      │\n                                             (Atomic Lua Check)\n                                                      ▼\n                                              [ Redis Cluster ]\n                                                ├── IN_PROGRESS ──► Block Duplicates\n                                                └── COMPLETED   ──► Return Cached Result\n```\n\n---\n\n## 1. Atomic State Machine in Redis with Lua\n\nTo avoid race conditions between concurrent requests bearing the same idempotency key, we execute an atomic Lua script:\n\n```lua\n-- KEYS[1]: idempotency:key\n-- ARGV[1]: request_hash\n-- ARGV[2]: ttl_seconds (e.g. 86400)\n\nlocal current = redis.call('GET', KEYS[1])\n\nif current then\n    return current -- Return existing state (IN_PROGRESS or response JSON)\nelse\n    -- Set IN_PROGRESS with TTL\n    redis.call('SET', KEYS[1], '{\"status\":\"PROCESSING\"}', 'EX', ARGV[2])\n    return nil -- Proceed to execute mutation\nend\n```\n\n---\n\n## 2. Distributed Locking & Deadlock Prevention\n\n> [!NOTE]\n> **Lease Expiration & Heartbeats**:\n> Never set infinite locks. Always attach a reasonable TTL ($30\\text{s}$) to allow automatic recovery if a worker node crashes mid-flight. Once the backend completes the transaction, it updates the Redis key from `PROCESSING` to `COMPLETED` alongside the cached serialized payload.",
-    "views": 0,
-    "likes": 0
-  },
-  {
-    "id": "vector-search-hnsw-rag-production",
-    "slug": "vector-search-hnsw-indexing-production-rag",
-    "title": "Vector Search & HNSW Indexing: Scaling Production Retrieval-Augmented Generation (RAG)",
-    "excerpt": "Deconstructing Hierarchical Navigable Small World (HNSW) graphs, cosine similarity quantization, and hybrid sparse/dense retrieval to minimize hallucination in LLM pipelines.",
+    "id": "llm-inference-routing-kubernetes",
+    "slug": "llm-inference-routing-kubernetes-gateway-api",
+    "title": "Serving LLMs on Kubernetes: Why Round-Robin Breaks and What Replaces It",
+    "excerpt": "KV-cache pressure, prefix caching and the Gateway API Inference Extension — how model-aware routing is replacing classic load balancing for LLM traffic.",
     "category": "Generative AI",
     "tags": [
-      "Generative AI",
-      "RAG",
-      "Vector Search",
-      "HNSW",
-      "Embeddings"
+      "LLMs",
+      "Kubernetes",
+      "Gateway API",
+      "vLLM",
+      "Inference"
     ],
-    "readTime": "10 min read",
-    "publishedAt": "Aug 18, 2026",
+    "readTime": "4 min read",
+    "publishedAt": "Nov 10, 2026",
     "isDraft": false,
     "author": {
       "name": "Harman",
       "signature": "Harmanpreet Singh",
       "role": "Backend & Distributed Systems Engineer"
     },
-    "content": "## Beyond Naive RAG: The Latency & Accuracy Trade-Off\n\nRetrieval-Augmented Generation (RAG) is the bridge that connects non-deterministic Large Language Models to private, deterministic knowledge bases.\n\nHowever, naive vector search ($O(N)$ brute-force Cosine / Euclidean distance calculation) becomes completely unfeasible as corpus sizes grow into millions of chunks.\n\n```text\n   Top Layer (Sparse Graph, Long Jumps)\n   Layer 2    ──────► [ O ] ────────────────► [ O ]\n                          │                       │\n   Layer 1    ──► [ O ] ──┼──► [ O ] ────────────► [ O ]\n                          │      │                 │\n   Layer 0    [O]──[O]──[O]──[O]──[O]──[O]──[O]──[O] (Dense Ground Layer)\n```\n\n---\n\n## 1. How Hierarchical Navigable Small World (HNSW) Works\n\nHNSW operates like **Skip Lists applied to multi-dimensional geometric graphs**:\n1. **Multi-layer Hierarchy**: The top layer has few nodes with long-distance edges across the vector space.\n2. **Greedy Traversal**: The search starts at the entry node in the top layer, greedily finding the closest neighbor, then drops to the lower layer to refine resolution.\n3. **Logarithmic Complexity**: Search complexity is reduced from $O(N)$ down to $O(\\log N)$.\n\n---\n\n## 2. Hybrid Retrieval: Combining Dense Embeddings with BM25 Sparse Search\n\nDense embeddings (e.g. OpenAI `text-embedding-3`, Cohere) capture semantic meaning, but struggle with exact matches (SKUs, IDs, method names).\n\n> [!NOTE]\n> **Reciprocal Rank Fusion (RRF)**:\n> In production, we combine BM25 keyword matching with HNSW dense vector search using reciprocal rank fusion:\n> $$RRF(d) = \\sum_{m \\in M} \\frac{1}{k + r_m(d)}$$\n> This achieves over **$94\\%$ retrieval accuracy** while preventing hallucinations on domain-specific acronyms and entity IDs.",
+    "content": "## Round-robin works until the requests are LLM prompts\n\nClassic load balancing assumes requests are roughly the same size. Round-robin or least-connections across a pool of replicas is good enough for a REST API where every call takes a few milliseconds.\n\nLLM inference breaks that assumption completely:\n\n- one request is a 20-token question, the next is a 30,000-token document with a 2,000-token answer;\n- each replica holds a **KV cache** of attention state for in-flight sequences, and its free space decides how many requests it can batch;\n- replicas that already hold a prompt prefix in cache (a shared system prompt, a long chat history) can skip most of the prefill work for follow-up requests.\n\nSend a long prompt to a replica whose KV cache is nearly full and it queues; send a follow-up turn to a replica that doesn't have the conversation cached and you redo all the prefill. A load balancer that can't see these signals leaves a lot of GPU on the table.\n\n---\n\n## 1. What the serving engine does\n\nEngines such as **vLLM** made high-throughput serving practical with ideas like **PagedAttention** (managing the KV cache in fixed-size blocks, like virtual memory pages), **continuous batching** (adding and removing sequences from a running batch every step) and **prefix caching** (reusing cached blocks for identical prompt prefixes).\n\nThese engines expose exactly the metrics a smarter router needs: queue depth, running requests, KV-cache utilisation, and which adapters are loaded.\n\n---\n\n## 2. Model-aware routing on Kubernetes\n\nThe Kubernetes community's response is the **Gateway API Inference Extension**. It adds an `InferencePool` resource (a set of model-server pods) and an **endpoint picker** that the gateway consults for every request. Instead of round-robin, the picker scores replicas on live serving metrics:\n\n```text\n client ──► Gateway (Envoy) ──► Endpoint Picker ──► best replica\n                                 │  scores using:\n                                 │   • queue length\n                                 │   • KV-cache utilisation\n                                 │   • prefix-cache affinity\n                                 │   • loaded LoRA adapters\n                                 ▼\n                       [ vLLM pod ] [ vLLM pod ] [ vLLM pod ]\n```\n\nProjects like **llm-d** build on this with prefix-cache-aware routing and **disaggregated serving** — running the compute-heavy *prefill* phase and the memory-bandwidth-heavy *decode* phase on separate pools that can be scaled independently.\n\n---\n\n## 3. A scoring function, simplified\n\nThe core idea fits in a few lines. This is a simplified version of the kind of scorer an endpoint picker runs — not any project's exact algorithm:\n\n```go\ntype Replica struct {\n    Name          string\n    QueueLen      int     // requests waiting\n    KVUtil        float64 // 0.0 - 1.0\n    HasPrefix     bool    // prompt prefix already cached here\n    HasAdapter    bool    // requested LoRA adapter loaded\n}\n\nfunc score(r Replica) float64 {\n    if r.KVUtil > 0.95 {\n        return -1 // effectively full: avoid unless nothing else\n    }\n    s := 1.0 - r.KVUtil            // headroom to batch more work\n    s -= 0.15 * float64(r.QueueLen) // penalise waiting requests\n    if r.HasPrefix {\n        s += 0.5 // skipping prefill is a big win\n    }\n    if r.HasAdapter {\n        s += 0.3 // avoids an adapter swap\n    }\n    return s\n}\n\nfunc pick(replicas []Replica) Replica {\n    best := replicas[0]\n    for _, r := range replicas[1:] {\n        if score(r) > score(best) {\n            best = r\n        }\n    }\n    return best\n}\n```\n\nThe weights are where the engineering lives: too much prefix affinity and one hot replica melts while others idle; too little and you throw away cache hits. Production systems tune these against real traffic and fall back to plain load balancing when metrics go stale.\n\n---\n\n## 4. What I learned serving models myself\n\nBuilding Lyra — a vocal studio that runs diffusion-based voice conversion — taught me the same lesson at small scale. GPU work is lumpy: a 10-second take and a 4-minute song are not the same request. Things that mattered most:\n\n- **Admission control before routing.** Rejecting or queueing work early beats letting a worker run out of memory halfway through.\n- **Make jobs resumable.** Long renders must survive dropped connections; clients should reconnect to a job, not restart it.\n- **Expose the right metrics.** Queue length and memory headroom are more useful than CPU percentage for anything on a GPU.\n\n---\n\n## Takeaways\n\n1. For LLM traffic, the load balancer has to understand the model server. Queue depth and KV-cache state matter more than connection counts.\n2. Prefix-cache affinity is the cheapest performance win available — as long as you guard against hot spots.\n3. Gateway API's inference extension is turning these ideas into a standard Kubernetes API, so model-aware routing no longer needs a bespoke proxy.\n",
+    "views": 0,
+    "likes": 0
+  },
+  {
+    "id": "sidecarless-service-mesh",
+    "slug": "sidecarless-service-mesh-ambient-ebpf-gateway-api",
+    "title": "Sidecar-less Service Mesh: Ambient Mode, eBPF and the Gateway API",
+    "excerpt": "Why meshes are dropping per-pod sidecars for node-level L4 proxies, optional L7 waypoints and eBPF — and how Gateway API makes the mesh swappable.",
+    "category": "Cloud Infrastructure",
+    "tags": [
+      "Service Mesh",
+      "Istio",
+      "eBPF",
+      "Gateway API",
+      "Meshery"
+    ],
+    "readTime": "4 min read",
+    "publishedAt": "Nov 05, 2026",
+    "isDraft": false,
+    "author": {
+      "name": "Harman",
+      "signature": "Harmanpreet Singh",
+      "role": "Backend & Distributed Systems Engineer"
+    },
+    "content": "## Why sidecars are being retired\n\nThe classic service-mesh design injects an Envoy sidecar into every pod. It gave us mTLS, retries and traffic splitting without touching application code — and it also gave us:\n\n- a proxy's worth of CPU and memory **per pod**, multiplied across thousands of pods;\n- restarts of every workload to upgrade the mesh;\n- startup races where the app tries to talk before its sidecar is ready;\n- full L7 parsing cost even for services that only needed encryption.\n\nThe industry's answer over the last two years has been the **sidecar-less mesh**: split the data plane into a cheap, always-on L4 layer and an optional L7 layer you pay for only where you need it.\n\n```text\n Sidecar model                      Ambient / node-level model\n ┌──────────┐ ┌──────────┐          ┌──────┐ ┌──────┐ ┌──────┐\n │ app│envoy│ │ app│envoy│          │ app  │ │ app  │ │ app  │\n └──────────┘ └──────────┘          └──┬───┘ └──┬───┘ └──┬───┘\n   N pods = N proxies                  └── per-node L4 proxy ──┘\n                                            │  (mTLS, identity)\n                                            ▼\n                                     optional L7 waypoint\n                                     (only for services that need it)\n```\n\n---\n\n## 1. Istio ambient mode\n\nIstio's ambient mode, generally available since Istio 1.24, is the clearest example of the split:\n\n- **ztunnel** runs once per node (written in Rust). It handles L4: workload identity, mTLS and L4 authorization. Traffic between nodes is tunnelled over **HBONE** — HTTP/2 `CONNECT` on port 15008.\n- **Waypoint proxies** are Envoy deployments you opt into per namespace or service when you need L7 features: header-based routing, retries, L7 authorization.\n\nEnrolling a namespace is a label, not a redeploy:\n\n```bash\nkubectl label namespace shop istio.io/dataplane-mode=ambient\n# only if you need L7 policy for this namespace:\nistioctl waypoint apply -n shop --enroll-namespace\n```\n\nThat last point is the real win: most services only need encryption and identity, so most services never pay for an L7 proxy.\n\n---\n\n## 2. eBPF moves work into the kernel\n\nCilium takes the node-level idea further by doing as much as possible in **eBPF** — programs attached to kernel hooks that can route, load-balance and enforce policy on packets without bouncing them through a user-space proxy. When L7 is needed, it hands traffic to a per-node Envoy.\n\nThe trade-off worth understanding: eBPF is extremely fast for L3/L4 decisions, but parsing HTTP/2 or gRPC still belongs in a real proxy. Good designs push the cheap decisions down and keep the expensive ones optional.\n\n---\n\n## 3. One API to configure it all: Gateway API (and GAMMA)\n\nThe other quiet revolution is configuration. Every mesh used to ship its own CRDs. **Gateway API** — GA since v1.0 — standardises routing, and the **GAMMA** initiative extends the same resources to east-west mesh traffic by attaching an `HTTPRoute` directly to a `Service`:\n\n```yaml\napiVersion: gateway.networking.k8s.io/v1\nkind: HTTPRoute\nmetadata:\n  name: checkout-canary\n  namespace: shop\nspec:\n  parentRefs:\n  - group: \"\"\n    kind: Service\n    name: checkout          # mesh traffic to this Service...\n  rules:\n  - backendRefs:\n    - name: checkout-v1\n      port: 8080\n      weight: 90\n    - name: checkout-v2     # ...gets a 10% canary\n      port: 8080\n      weight: 10\n```\n\nThe same manifest works across conformant implementations, which makes the mesh a swappable component instead of a lock-in decision.\n\n---\n\n## 4. Where cloud-native management fits\n\nWith meshes, gateways and policies all expressed as Kubernetes resources, the hard part shifts from *installing* infrastructure to *understanding and changing it safely*. That's the space Meshery — the CNCF cloud-native manager I contribute to — works in: modelling infrastructure as visual, versionable designs, validating relationships between components, and deploying them consistently across clusters. My own contributions there have been on the Go server side, for example making environment lookups ignore soft-deleted connections so the UI never shows infrastructure that no longer exists.\n\n---\n\n## Choosing in practice\n\n1. **Only need mTLS and identity?** A node-level L4 data plane (ambient ztunnel, or Cilium) gives you most of the value at a fraction of the cost.\n2. **Need canaries, retries, header routing?** Add L7 — but only to the services that need it (waypoints, or per-node Envoy).\n3. **Write routes in Gateway API.** It keeps your options open if you change mesh later.\n4. **Measure before and after.** Per-pod memory, p99 latency and mesh upgrade time are the three numbers that justify the migration.\n",
+    "views": 0,
+    "likes": 0
+  },
+  {
+    "id": "gang-scheduling-dra-kubernetes",
+    "slug": "gang-scheduling-dra-kubernetes-ai-workloads",
+    "title": "Gang Scheduling Meets DRA: Kubernetes as a Scheduler for AI Workloads",
+    "excerpt": "All-or-nothing placement with Volcano and Kueue, Dynamic Resource Allocation for GPUs, and topology-aware scheduling — lessons from working in a scheduler codebase.",
+    "category": "Cloud Infrastructure",
+    "tags": [
+      "Kubernetes",
+      "Volcano",
+      "DRA",
+      "Scheduling",
+      "GPUs"
+    ],
+    "readTime": "5 min read",
+    "publishedAt": "Oct 30, 2026",
+    "isDraft": false,
+    "author": {
+      "name": "Harman",
+      "signature": "Harmanpreet Singh",
+      "role": "Backend & Distributed Systems Engineer"
+    },
+    "content": "## The problem: Kubernetes was built to place pods, not jobs\n\nThe default Kubernetes scheduler makes one decision at a time: take a pending pod, find a node that fits, bind it, move on. That works beautifully for stateless web services. It falls apart for the workloads that now dominate cluster spend — distributed training and large batch jobs — where a job is only useful if **all** of its workers run at the same time.\n\nPicture a 16-worker training job on a cluster with room for 12 GPUs. Pod-by-pod scheduling happily starts 12 workers, which then sit idle waiting for peers that will never arrive. Worse, a second job does the same with the remaining capacity, and now two jobs are deadlocked holding resources neither can use.\n\n```text\n  Job A (needs 16) ──► 12 running, 4 pending   ✗ stuck, burning GPUs\n  Job B (needs 8)  ──►  0 running, 8 pending   ✗ starved\n  ─────────────────────────────────────────────\n  Gang scheduling:     A waits whole, B runs whole  ✓ cluster does useful work\n```\n\nTwo shifts are fixing this at the platform level: **gang scheduling** and **Dynamic Resource Allocation (DRA)**.\n\n---\n\n## 1. Gang scheduling: all or nothing\n\nGang scheduling treats a group of pods as one unit. Either the scheduler can place the minimum number of members together, or it places none of them and keeps the capacity free for something that fits.\n\nIn Volcano (a CNCF project I contribute to), the unit is a `PodGroup` with a `minMember`:\n\n```yaml\napiVersion: scheduling.volcano.sh/v1beta1\nkind: PodGroup\nmetadata:\n  name: llm-finetune\nspec:\n  minMember: 16          # don't start anything until 16 can start\n  queue: research\n  minResources:\n    cpu: \"64\"\n```\n\nInternally Volcano runs a pipeline of **actions** each scheduling cycle — `enqueue`, `allocate`, `preempt`, `reclaim`, `backfill` — and **plugins** such as `gang`, `drf`, `proportion`, `priority` and `binpack` vote on every decision. The `gang` plugin is what refuses to commit a partial allocation; `proportion` and queues make sure one team can't starve another.\n\nKueue, from the Kubernetes SIGs, approaches the same problem from the admission side: jobs wait in queues against quotas and are only admitted when their whole footprint fits. The two ideas are complementary — admission control decides *whether* a job may start, gang-aware scheduling decides *where* its pods land.\n\n---\n\n## 2. DRA: devices stop being opaque counters\n\nFor years GPUs were requested as an extended resource:\n\n```yaml\nresources:\n  limits:\n    nvidia.com/gpu: 1\n```\n\nThat's just an integer. The scheduler can't tell an 80 GB card from a 24 GB one, can't express \"two GPUs on the same NVLink island\", and can't share a device between containers cleanly.\n\n**Dynamic Resource Allocation** replaces the counter with a real API. Drivers publish devices and their attributes as `ResourceSlice`s; admins define `DeviceClass`es; workloads ask for devices through `ResourceClaim`s with CEL selectors. DRA's core graduated to stable in Kubernetes 1.34, which is why you're now seeing it in managed clusters.\n\n```yaml\napiVersion: resource.k8s.io/v1\nkind: ResourceClaimTemplate\nmetadata:\n  name: big-gpu\nspec:\n  spec:\n    devices:\n      requests:\n      - name: gpu\n        exactly:\n          deviceClassName: gpu.example.com\n          selectors:\n          - cel:\n              expression: >-\n                device.capacity[\"gpu.example.com\"].memory\n                  .compareTo(quantity(\"40Gi\")) >= 0\n```\n\nThe pod then references the claim instead of a magic resource name. Because the scheduler now understands device attributes, it can make placement decisions that used to live in vendor-specific device plugins.\n\n---\n\n## 3. Topology is the next frontier\n\nOnce you place jobs as a whole, the next question is *how close* their members are. All-reduce traffic between training workers is brutal; two workers on the same rack switch can be dramatically faster than two workers three hops apart. Recent Volcano releases add network-topology-aware scheduling, modelling racks and switches as a hierarchy so a gang lands inside the tightest network tier that can hold it.\n\n```text\n          spine\n         /     \\\n     leaf-1   leaf-2        ← prefer: whole gang under one leaf\n     /  \\      /  \\\n   n1   n2   n3   n4\n```\n\n---\n\n## What working in a scheduler codebase taught me\n\n- **Correctness beats cleverness.** A scheduler that occasionally commits a partial gang is worse than a slow one. Most bugs I've seen are in edge cases — preemption racing with a job that just became ready, or caches drifting from the API server.\n- **Tests need realistic fixtures.** I spent time separating E2E fixtures from examples in Volcano's test suite; it's unglamorous, but it's what makes refactors of scheduling workflows safe.\n- **Every cycle is a budget.** Plugins run for every pending job on every cycle. An `O(n²)` helper is invisible on a laptop and painful at a few thousand nodes.\n\n---\n\n## Takeaways\n\n1. If your cluster runs multi-pod jobs, pod-at-a-time scheduling is quietly wasting capacity. Add gang semantics (Volcano) or gang-aware admission (Kueue).\n2. Plan the move from `nvidia.com/gpu: N` to DRA claims — it unlocks attribute-based selection and sharing.\n3. Watch topology-aware placement: for distributed training it's the difference between buying more GPUs and using the ones you have.\n",
     "views": 0,
     "likes": 0
   }
