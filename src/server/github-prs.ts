@@ -17,7 +17,7 @@ export const PR_SOURCES = {
 export type PrSource = keyof typeof PR_SOURCES;
 
 /** How long GitHub results are cached before re-fetching (seconds). */
-export const PR_REVALIDATE_SECONDS = 1800;
+export const PR_REVALIDATE_SECONDS = 300;
 
 type SearchItem = {
   number: number;
@@ -39,7 +39,8 @@ export async function fetchMergedPrs(source: PrSource): Promise<MergedPr[]> {
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "portfolio-merged-prs",
   };
-  const token = process.env.GITHUB_TOKEN;
+  // Own variable name so CI/sandbox-provided GITHUB_TOKENs (often repo-scoped) are never picked up.
+  const token = process.env.PORTFOLIO_GITHUB_TOKEN;
   const get = (withToken: boolean) =>
     fetch(url, {
       headers: withToken && token ? { ...headers, Authorization: `Bearer ${token}` } : headers,

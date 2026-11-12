@@ -112,7 +112,7 @@ export const experiences: ExperienceEntry[] = [
     mergedPrs: { source: "meshery", label: "Meshery" },
     bullets: [
       "Currently contributing to Meshery, the CNCF cloud-native manager for designing, deploying, and operating Kubernetes infrastructure.",
-      "Working in the Go server codebase — fixed a nil error being passed to ErrBlankName in the load test handler so blank-name failures surface a real error.",
+      "Working in the Go server codebase — fixed environment lookups so GetEnvironmentConnections excludes soft-deleted connections and mappings.",
     ],
   },
   {

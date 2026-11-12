@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       { prs, allPrsUrl, updatedAt: new Date().toISOString() },
       {
         headers: {
-          "Cache-Control": `public, s-maxage=${PR_REVALIDATE_SECONDS}, stale-while-revalidate=86400`,
+          "Cache-Control": `public, s-maxage=${PR_REVALIDATE_SECONDS}, stale-while-revalidate=60`,
         },
       },
     );
